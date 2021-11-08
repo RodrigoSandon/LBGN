@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "Behavioral_CalciumDataProcessing"
+		},
+		{
+			"path": "Behavioral_Calcium_DLC_Alignment"
+		},
+		{
+			"path": "Behavioral_Calcium_DLC_Analysis"
+		}
+	],
+	"settings": {}
+}
