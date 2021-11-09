@@ -1,9 +1,7 @@
-# LBGN
+# Laboratory of Behavioral and Genomic Neuroscience
 Supervisors: Dr. Patrick Piantadosi and Dr. Andrew Holmes
 
 # Main Project: ISX-ABET-DLC Pipeline
-
-## ISX-ABET-DLC
 
 ISX-ABET-DLC is a Python library for extracting, preprocessing, aligning, and analyzing calcium activity data, behavioral data, and positional data using Inscopix (ISX), Animal Behavior Environment Test (ABET), and DeepLabCut (DLC) with 1-photon imaging data in mind.
 

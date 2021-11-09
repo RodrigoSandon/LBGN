@@ -17,6 +17,10 @@ def concatenated_csvs_paths(session_path, endswith) -> List:
     return files
 
 
+def find_non_avg_cell_event_csvs(session_path, endswith) -> List:
+    pass
+
+
 def plot_traces(
     lst_of_concat_csv_paths,
     cols_to_plot: Optional[List[str]] = None,
