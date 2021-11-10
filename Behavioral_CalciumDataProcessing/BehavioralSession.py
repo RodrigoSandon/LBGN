@@ -22,9 +22,14 @@ class BehavioralSession:
         """
         Keeping a count of number of trials initiated in the session.
         """
+        """        is_new_trial = (
+            (df.Item_Name == "Define Session1")
+            | (df.Item_Name == "Define Session2")
+            | (df.Item_Name == "Define Session3")
+        )"""
         is_new_trial = (df.Item_Name == "Forced-Choice Trials Begin") | (
             df.Item_Name == "Free-Choice Trials begin"
-        )  # series of booleans
+        )  # series of booleans #old way of defining a trial 11/10/21
         df["is_new_trial"] = is_new_trial  # new column whether it is a new trial or not
         df["is_new_trial"].value_counts()
         df["trial_num"] = np.cumsum(

@@ -36,12 +36,20 @@ class Driver:
             )
             # print(neuron_obj.get_sample_dff_times())
             # print(neuron_obj.get_dff_trace())
-            neuron_obj.add_aligned_dff_traces(
+            """            neuron_obj.add_aligned_dff_traces(
                 "Choice Time (s)",
                 half_of_time_window=10,
                 trial_type="Trial Type",
                 reward_size="Reward Size",
+            )"""
+            neuron_obj.add_aligned_dff_traces(
+                "Choice Time (s)",
+                half_of_time_window=10,
+                block="Block",
+                rew_size="Reward Size",
+                shock="Shock Ocurred",
             )
+            # time always goes last, everything else goes in order (time window not included in name)
             # print(neuron_obj.categorized_dff_traces)
             number_of_event_traces = 0
             for (

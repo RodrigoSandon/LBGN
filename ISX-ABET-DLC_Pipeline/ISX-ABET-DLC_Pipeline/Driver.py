@@ -18,11 +18,11 @@ class Driver:
             )
             if "list" in input_1:
 
-            Driver.preprocess_multiple_vids
+                Driver.preprocess_multiple_vids()
         else:
             print("Please choose a valid option!")
             print("Your input must either contain %s or %s." % (one, multiple))
-    
+
     def preprocess_multiple_vids():
         print(
             "Giving a list only preprocesses the according .isxd files. While providing a path makes it so that the program finds all .isxd files recursively."

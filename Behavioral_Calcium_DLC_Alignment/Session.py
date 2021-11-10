@@ -216,7 +216,7 @@ class EventTraces(Neuron):  # for one combo
     def stack_dff_traces_of_group(self, list_of_idxs, start_choice_collect):
         """This is for one grouping found from the groupby columns"""
         # print("Chosen time to extract: ", start_choice_collect)
-        # print(list_of_idxs) - works
+        print("list of idxs for group ", list_of_idxs)  # - works
         list_of_lists = []
         # list of dff traces (which is a list), every list within list represents the event found
         for abet_idx in list_of_idxs:
@@ -274,6 +274,7 @@ class EventTraces(Neuron):  # for one combo
         ).tolist()
 
     def process_dff_traces_by(self):
+        print("Currently processing dff traces for all groups...")
         groupby_list = []
 
         for groupby_key, value in self.groupby_dict.items():
@@ -282,6 +283,7 @@ class EventTraces(Neuron):  # for one combo
         print("groupby list: ", groupby_list)
 
         grouped_table = self.get_abet().groupby(groupby_list)
+        print("abet file: ", self.get_abet().head())
         print(grouped_table.groups)
         # print(type(grouped_table.groups))
 

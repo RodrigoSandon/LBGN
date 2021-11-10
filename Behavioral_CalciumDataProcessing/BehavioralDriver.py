@@ -7,8 +7,8 @@ from BehavioralUtilities import BehavioralUtilities
 class BehavioralDriver:
     def main():
         ABET_1 = BehavioralSession(
-            "BLA-INSC-6 06082021",
-            "/media/rory/PTP Inscopix 2/PTP_Inscopix_#3/BLA-Insc-6/Session-20210608-095359_BLA-Insc-6_RDT_D3_NEW_SCOPE/2021-06-08-09-54-49_video_BLA-Insc-6_RDT_D3_NEW_SCOPE/BLA-INSC-6 06082021.csv",
+            "BLA-INSC-6 05182021",
+            "/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-6/Session-20210518-102215_BLA-Insc-6_RDT_D1/2021-05-18-10-26-03_video_BLA-Insc-6_RDT_D1/BLA-INSC-6 05182021.csv",
         )
         ABET_1.preprocess_csv()
         df = ABET_1.get_df()
@@ -30,10 +30,10 @@ class BehavioralDriver:
         processed_behavioral_df = BehavioralUtilities.del_first_row(
             processed_behavioral_df
         )
-        print(processed_behavioral_df.to_string())
+        # print(processed_behavioral_df.to_string())
         BehavioralUtilities.verify_table(processed_behavioral_df)
         processed_behavioral_df.to_csv(
-            "/media/rory/PTP Inscopix 2/PTP_Inscopix_#3/BLA-Insc-6/Session-20210608-095359_BLA-Insc-6_RDT_D3_NEW_SCOPE/2021-06-08-09-54-49_video_BLA-Insc-6_RDT_D3_NEW_SCOPE/BLA-INSC-6 06082021_ABET_processed.csv",
+            "/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-6/Session-20210518-102215_BLA-Insc-6_RDT_D1/2021-05-18-10-26-03_video_BLA-Insc-6_RDT_D1/BLA-INSC-6 05182021_ABET_processed_fixed111021.csv",
             index=True,
         )
 
