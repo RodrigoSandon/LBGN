@@ -11,6 +11,10 @@ This is the simplest type of modularity so that I won't have to edit code that g
 However, this modularity has it's drawbacks: Still need to go back and forth between code to setup another analysis
 only in the case we want to derive some other metric for each cell, for a given time window, for any given event combo
 (which would require editing of setting up data). Either way this should be the lowest data we get into.
+
+WARNING: This program relies on a particular data structuring. This one:
+/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1/SingleCellAlignmentData/C01/Block_Choice Time (s)/1.0/avg_plot_ready.csv
+/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1/SingleCellAlignmentData/C03/Block_Reward Size_Learning Stratergy_Choice Time (s)/(3.0, 'Large', 'Win Stay')/avg_plot_ready.csv
 """
 
 
@@ -41,8 +45,10 @@ def create_dict_of_what_csvs_to_concat(
                                         }
     }
     """
+    # example" /media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1/SingleCellAlignmentData/C01/Block_Choice Time (s)
     for path in lst_of_avg_plot_rdy_csv_paths:
-        eventname = path.split("/")[9]
+        eventname = path.split("/")[10]
+        print(f"CURRENT EVENT NAME: {eventname}")
         if eventname not in event_dict:
             event_dict[eventname] = {}
 
@@ -51,10 +57,10 @@ def create_dict_of_what_csvs_to_concat(
     for key in event_dict:
         # now iterate through paths again but only find combos for paths that contain this event name
         for path in lst_of_avg_plot_rdy_csv_paths:
-            event_name = path.split("/")[9]
-            combo_name = path.split("/")[10]
+            event_name = path.split("/")[10]
+            combo_name = path.split("/")[11]
             if event_name == key:  # event names match
-                # print(combo_name, key)
+                print(f"COMBO NAME: {combo_name}, KEY: {key}")
                 # create an empty cell_dict, this is where all the cell avg dff traces are going to go
                 # get the combo, add as many combos as there are seen, but only if have never seen that combo before
                 if combo_name not in event_dict[key]:
@@ -65,9 +71,9 @@ def create_dict_of_what_csvs_to_concat(
     for event in event_dict:
         for combo in event_dict[event]:
             for path in lst_of_avg_plot_rdy_csv_paths:
-                event_name = path.split("/")[9]
-                combo_name = path.split("/")[10]
-                cell_name = path.split("/")[8]
+                event_name = path.split("/")[10]
+                combo_name = path.split("/")[11]
+                cell_name = path.split("/")[9]
                 if event_name == event and combo_name == combo:
                     if cell_name not in event_dict[event_name][combo_name]:
                         df = pd.read_csv(path)
@@ -103,13 +109,13 @@ def create_dict_of_what_csvs_to_concat(
 
 def main():
     SESSION_PATH = Path(
-        r"/media/rory/PTP Inscopix 2/PTP_Inscopix_#3/BLA-Insc-6/Session-20210518-102215_BLA-Insc-6_RDT_D1"
+        r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1"
     )
 
     lst_of_avg_plot_rdy_csv_paths = find_avg_dff_of_cell_for_event(
         SESSION_PATH, "avg_plot_ready.csv"
     )
-    # print(*lst_of_avg_plot_rdy_csv_paths, sep="\n")
+    print(*lst_of_avg_plot_rdy_csv_paths, sep="\n")
     bw_cell_alignment_folder_name = "BetweenCellAlignmentData"
     bw_cell_data_path = os.path.join(SESSION_PATH, bw_cell_alignment_folder_name)
 

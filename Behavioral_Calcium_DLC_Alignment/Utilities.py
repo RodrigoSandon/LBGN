@@ -2,6 +2,14 @@ import os, glob
 from typing import List
 import matplotlib.pyplot as plt
 import pandas as pd
+from itertools import combinations
+
+
+def create_combos(event_name_list_input: List):
+    number_items_to_select = list(range(event_name_list_input + 1))
+    for i in number_items_to_select:
+        to_select = i
+        combs = combinations(event_name_list_input, to_select)
 
 
 def avg_cell_eventrace(csv_path, cell_name, plot: bool, export_avg: bool):

@@ -14,6 +14,7 @@ Summary:
     3) In parallel, perform and export the longitudinal registration 
     results for all the sessions that contain cnmfe_cellset.isxd files.
     4) Preprocess longreg file and export result.
+    5) make correct abet gpio file
 """
 """
 Methods:
@@ -263,7 +264,7 @@ class CalciumPreprocessing:
         self, gpio_path, root_to_out
     ) -> Path:  # returns path where csv is saved
         if gpio_path == "":
-            return "GPIO file not found!"
+            print("GPIO file not found!")
         else:  # want output csv file to be where it's processed file is
             isx.export_gpio_set_to_csv(
                 gpio_path,
@@ -329,8 +330,8 @@ def main():
     -saves time if just adding on things curr folder
     """
 
-    ROOT_PATH = Path(r"/media/rory/PTP Inscopix 2/PTP_Inscopix_#3/BLA-Insc-6")
-    RAW_ROOT_PATH = Path(r"/media/rory/PTP Inscopix 3/Inscopix_to_Analyze/BLA-Insc-6")
+    ROOT_PATH = Path(r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-7")
+    RAW_ROOT_PATH = Path(r"/media/rory/PTP Inscopix 3/Inscopix_to_Analyze/BLA-Insc-7")
 
     # Indicate for what root directory are these utilities for
     util = CalciumPreprocessing(ROOT_PATH, RAW_ROOT_PATH)
@@ -377,25 +378,27 @@ def main():
         len(cellsets),
         len(util.premake_listof_outfile_paths(roots, "cnmfe_cellset_out.isxd")),
     )
+    try:
+        isx.longitudinal_registration(  # error: it thought meta_csv_filename was a movie input, so need the keyword
+            cellsets,
+            util.premake_listof_outfile_paths(roots, "cnmfe_cellset_out.isxd"),
+            csv_file=meta_csv_filename,
+            min_correlation=0.50,
+            accepted_cells_only=True,
+        )
+        # print("here")
 
-    isx.longitudinal_registration(  # error: it thought meta_csv_filename was a movie input, so need the keyword
-        cellsets,
-        util.premake_listof_outfile_paths(roots, "cnmfe_cellset_out.isxd"),
-        csv_file=meta_csv_filename,
-        min_correlation=0.50,
-        accepted_cells_only=True,
-    )
-    # print("here")
+        # preprocess long reg file and export
+        mod_longreg_df = util.preprocess_longreg_results(meta_csv_filename, 0.90, roots)
 
-    # preprocess long reg file and export
-    mod_longreg_df = util.preprocess_longreg_results(meta_csv_filename, 0.90, roots)
-
-    mod_longreg_df.to_csv(
-        meta_csv_filename.replace(
-            "longreg_results.csv", "longreg_results_preprocessed.csv"
-        ),
-        index=False,
-    )
+        mod_longreg_df.to_csv(
+            meta_csv_filename.replace(
+                "longreg_results.csv", "longreg_results_preprocessed.csv"
+            ),
+            index=False,
+        )
+    except:
+        print("LONG REG COULD NOT BE PERFORMED IN THIS MOUSE")
 
     # preprocess dff traces now and export
     dff_file_paths = util.find_recursively("dff_traces.csv")

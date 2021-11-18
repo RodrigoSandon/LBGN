@@ -38,7 +38,7 @@ def plot_traces(
     for concat_path in lst_of_concat_csv_paths:
         try:
             new_path = concat_path.replace(
-                "concat_cells.csv", "concat_heatmap_zscore2.5_gauss_sigma.png"
+                "concat_cells.csv", "concat_heatmap_zscore2.5_gauss0.2.png"
             )
             df = pd.read_csv(concat_path)
             df = standardize(df)
@@ -55,7 +55,7 @@ def plot_traces(
             pass
 
 
-def spaghetti_plot(lst_of_indv_event_traces_of_cell):
+def spaghetti_plot_indv_events_in_cell(lst_of_indv_event_traces_of_cell):
     for csv_path in lst_of_indv_event_traces_of_cell:
         print(csv_path)
         try:
@@ -77,12 +77,12 @@ def spaghetti_plot(lst_of_indv_event_traces_of_cell):
             new_header = df.iloc[0]  # first row
             df = df[1:]  # don't include first row in new df
             df.columns = new_header
-            print(df.head())
+            # print(df.head())
 
             x = list(df.index)
             # print(x)
 
-            print(list(df.columns))
+            # print(list(df.columns))
             for col in df.columns:
                 print("col: ", col)
                 if col != "Event #":
@@ -93,7 +93,32 @@ def spaghetti_plot(lst_of_indv_event_traces_of_cell):
             plt.savefig(new_path)
             plt.close()
 
-        except ValueError:
+        except ValueError as e:
+            print("VALUE ERROR:", e)
+            pass
+
+
+def spaghetti_plot_across_avg_cell_trace(lst_of_indv_event_traces_of_cell):
+    for csv_path in lst_of_indv_event_traces_of_cell:
+        print(csv_path)
+        try:
+            new_path = csv_path.replace("concat_cells.csv", "spaghetti_plot.png")
+            df = pd.read_csv(csv_path)
+
+            df = standardize(df)
+            df = gaussian_smooth(df)
+            x = list(df.index)
+            for cell in df.columns:
+                print("cell: ", cell)
+                plt.plot(x, list(df[cell]), label=cell)
+            number_cells = len(df.T)
+            plt.title("DF/F (n=%s)" % (number_cells))
+            plt.locator_params(axis="x", nbins=20)
+            plt.savefig(new_path)
+            plt.close()
+
+        except ValueError as e:
+            print("VALUE ERROR:", e)
             pass
 
 
@@ -123,15 +148,44 @@ def main():
 def main2():
     # For a given session
     SESSION_ROOT = Path(
-        r"/media/rory/PTP Inscopix 2/PTP_Inscopix_#3/BLA-Insc-6/Session-20210518-102215_BLA-Insc-6_RDT_D1"
+        r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1"
     )
 
     lst_of_indv_event_traces_of_cell = find_csv_paths_startswith(
         SESSION_ROOT, "plot_ready.csv"
     )
-    spaghetti_plot(lst_of_indv_event_traces_of_cell)
+    spaghetti_plot_indv_events_in_cell(lst_of_indv_event_traces_of_cell)
+
+
+def main3():
+    # For a given session
+    SESSION_ROOT = Path(
+        r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1"
+    )
+    BETWEEN_CELL_ALIGNMENT_ROOT = os.path.join(SESSION_ROOT, "BetweenCellAlignmentData")
+
+    lst_of_concat_csv_paths = find_csv_paths(SESSION_ROOT, "concat_cells.csv")
+    plot_traces(lst_of_concat_csv_paths, vmin=-2.5, vmax=2.5)
+
+    lst_of_indv_event_traces_of_cell = find_csv_paths_startswith(
+        SESSION_ROOT, "plot_ready.csv"
+    )
+
+    spaghetti_plot_indv_events_in_cell(lst_of_indv_event_traces_of_cell)
+
+
+def main4():
+    # For a given session
+    SESSION_ROOT = Path(
+        r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1"
+    )
+
+    lst_of_indv_event_traces_of_cell = find_csv_paths_startswith(
+        SESSION_ROOT, "concat_cells.csv"
+    )
+    spaghetti_plot_across_avg_cell_trace(lst_of_indv_event_traces_of_cell)
 
 
 if __name__ == "__main__":
     # main()
-    main2()
+    main4()

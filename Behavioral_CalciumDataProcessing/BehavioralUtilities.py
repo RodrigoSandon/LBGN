@@ -160,8 +160,8 @@ class BehavioralUtilities:
                     "Evnt_Time"
                 ].values[0]
 
-        def shocked():
-            """A shock value of 0.0 means"""
+        """def shocked():
+
             if df[df["Item_Name"] == "shock_on_off"][
                 "Arg1_Value"
             ].empty:  # there wasn't a shock string found, so shock wasnt recorded (shock impossible, so false)
@@ -188,7 +188,17 @@ class BehavioralUtilities:
                 if shock_value == 0 or shock_value == np.nan:
                     return False
                 else:
-                    return True
+                    return True"""
+
+        def shocked():
+            """A shock value of 0.0 means"""
+
+            if any(
+                df["Item_Name"].str.contains("Shocker #1")
+            ):  # there wasn't a shock string found, so shock wasnt recorded (shock impossible, so false)
+                return True
+            else:
+                return False
 
         def omission():
             # one will always be empty, so has to be "and"
@@ -266,6 +276,26 @@ class BehavioralUtilities:
         omission = omission()  # regardless whether trial was forced or free
         win_loss = win_or_loss()  # list indicating whether the trial was win or loss
 
+        if omission == "Omission":
+            # if it's an omission trial, choice time should be +30 of start time
+            choice_time = start_time + 30
+            print(f"OMISSION TIME: {choice_time}")
+        elif omission == "ITI":
+            # if it's an ITI trial, find choice time of blankside in raw abet
+            # we have a series of values for this trial remember
+            if any(df["Item_Name"].str.contains("ITI TO", case=False)):
+                time_of_touch = df[df["Item_Name"].str.contains("ITI TO", case=False)][
+                    "Evnt_Time"
+                ].values[0]
+                print(f"TIME OF ITI TOUCH: {time_of_touch}")
+
+                choice_time = time_of_touch
+
+            else:
+                print(
+                    "NO 'BlankSide' nor 'LeftBlank' nor 'RightBlank' string found for ITI!"
+                )
+
         """This series is added on to the waiting new grouped table in a variable I indicated"""
         return pd.Series(
             {
@@ -327,8 +357,8 @@ class BehavioralUtilities:
         for row_i in range(1, len(df)):
             if (
                 df.loc[row_i, "Omission"] != "ITI"
-                or df.loc[row_i, "Omission"] != "Omission"
-            ):  # keep counting, without including ITIs or Omissions
+                and df.loc[row_i, "Omission"] != "Omission"
+            ):  # keep counting, only if the omission value is not neither ITI and Omission
                 count += 1
             if (
                 count == trails_in_block
@@ -339,8 +369,34 @@ class BehavioralUtilities:
             if np.isnan(df.loc[row_i]["Block"]):
                 print("empty row at: ", row_i)
                 df.at[row_i, "Block"] = curr_block
-                flag = True
-            # print(df.loc[row_i]["Block"], type(df.loc[row_i]["Block"]))
+
+        """print("Working on...", df)
+        count = 0
+        curr_block = 1
+        # df = df.fillna(value="-") <- not needed
+        for row_i in range(0, len(df)):
+
+            if (
+                count == trails_in_block
+            ):  # but if that number turns out to 30, change it back to 1 and this means we've moved on to next block
+                count = 1
+                curr_block += 1
+            # can start at count = 0 because it becomes 1 when it sees a number, so there should be 30 of them
+            if ((df.loc[row_i, "Omission"] != "ITI") == True) and (
+                (df.loc[row_i, "Omission"] != "Omission") == True
+            ):  # if both are true in that they are not ITI or Omission, then count
+                count += 1
+            if not any(
+                (
+                    count == trails_in_block,
+                    (
+                        ((df.loc[row_i, "Omission"] != "ITI") == True)
+                        and ((df.loc[row_i, "Omission"] != "Omission") == True)
+                    ),
+                )
+            ):
+                df.at[row_i, "Block"] = curr_block"""
+
         return df
 
     def del_first_row(df):

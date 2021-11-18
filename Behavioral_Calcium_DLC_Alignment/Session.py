@@ -4,13 +4,14 @@ from pathlib import Path
 import os, glob
 import Utilities
 from typing import List
+from itertools import combinations
 
 
 class Session(object):
     """Loading requires that you have dff, abet, and dlc data all in one session folder already.
 
     Returns:
-        [type]: [description]
+        dff traces for a given time window for each accepted cell in the session.
     """
 
     neurons = {}  # [cell_name] = Neuron
@@ -118,13 +119,19 @@ class Neuron(Session):
         self.cell_name = cell_name
         self.dff_trace = dff_trace_df
 
+    def get_cell_name(self):
+        return self.cell_name
+
+    def set_cell_name(self, new_name):
+        self.cell_name = new_name
+
     def get_dff_trace(self):
         return self.dff_trace
 
     def get_categorized_dff_traces(self):
         return self.categorized_dff_traces
 
-    # trial_type, reward_type, event_type
+    # creates an even trace for all given combinations of the list of values inputted
     def add_aligned_dff_traces(
         self,
         acquire_by_start_choice_or_collect_times,
@@ -136,21 +143,30 @@ class Neuron(Session):
         for groupby_key, value in groupby_dict.items():
             event_name_list.append(value)
 
-        event_name = (
-            " ".join(event_name_list) + " " + acquire_by_start_choice_or_collect_times
-        )
+        number_items_to_select = list(range(len(event_name_list) + 1))
+        for i in number_items_to_select:
+            to_select = i
+            combs = combinations(event_name_list, to_select)
+            for combine_by_list in list(combs):
+                # print("curr combo: ", combine_by_list)
+                event_name = (
+                    "_".join(combine_by_list)
+                    + "_"
+                    + acquire_by_start_choice_or_collect_times
+                )
+                self.categorized_dff_traces[event_name] = list(combine_by_list)
 
-        self.categorized_dff_traces[event_name] = EventTraces(
-            self.cell_name,
-            self.dff_trace,
-            event_name,
-            acquire_by_start_choice_or_collect_times,
-            half_of_time_window,
-            **groupby_dict
-        )
+                self.categorized_dff_traces[event_name] = EventTrace(
+                    self.cell_name,
+                    self.dff_trace,
+                    event_name,
+                    acquire_by_start_choice_or_collect_times,
+                    half_of_time_window,
+                    list(combine_by_list),
+                )
 
 
-class EventTraces(Neuron):  # for one combo
+class EventTrace(Neuron):  # for one combo
     """
     Even table defines which combination of column values we are extracting dff traces from.
     For now, there is a focus on alignment based on one combination chosen (multiple columns chosen
@@ -182,13 +198,14 @@ class EventTraces(Neuron):  # for one combo
         eventtraces_name,
         start_choice_or_collect_times,
         half_of_time_window,
-        **groupby_dict
+        groupby_list: list,
     ):
         # so this EventTraces obj should have a name
         self.name = eventtraces_name
         self.start_choice_or_collect_times = start_choice_or_collect_times
         self.half_of_time_window = half_of_time_window
-        self.groupby_dict = groupby_dict
+        self.groupby_list = groupby_list
+        self.events_omitted = 0
         super().__init__(cell_name, dff_trace)
 
     def get_event_traces_name(self):
@@ -225,39 +242,45 @@ class EventTraces(Neuron):  # for one combo
             time_for_this_idx_in_abet = self.get_abet().iloc[
                 abet_idx, self.get_abet().columns.get_loc(start_choice_collect)
             ]
-            # print("time_for_this_idx_in_abet: ", time_for_this_idx_in_abet)
-            # now have time, pull this time from dff of neuron
-            """TODO: there could be where the desired time window doesn't include that index"""
-            # essentially need to get the indices of what this time range entails
-            lower_bound_time = time_for_this_idx_in_abet - self.half_of_time_window
-            upper_bound_time = time_for_this_idx_in_abet + self.half_of_time_window
-            idx_df_lower_bound_time, lower_time_val = self.find_idx_of_time_bound(
-                lower_bound_time
-            )
-            """print(
-                (
-                    "desired START time to extract dff traces from: %s, actual time extracted: %s"
+            if (
+                str(time_for_this_idx_in_abet) != "nan"
+            ):  # if the time is nan, then we don't include it in the stack of dff traces
+
+                # now have time, pull this time from dff of neuron
+                """TODO: there could be where the desired time window doesn't include that index"""
+                # essentially need to get the indices of what this time range entails
+                lower_bound_time = time_for_this_idx_in_abet - self.half_of_time_window
+                upper_bound_time = time_for_this_idx_in_abet + self.half_of_time_window
+                idx_df_lower_bound_time, lower_time_val = self.find_idx_of_time_bound(
+                    lower_bound_time
                 )
-                % (lower_bound_time, lower_time_val)
-            )"""
-            idx_df_upper_bound_tim, upper_time_val = self.find_idx_of_time_bound(
-                upper_bound_time
-            )
-            """print(
-                (
-                    "desired END time to extract dff traces from: %s, actual time extracted: %s"
+                """print(
+                    (
+                        "desired START time to extract dff traces from: %s, actual time extracted: %s"
+                    )
+                    % (lower_bound_time, lower_time_val)
+                )"""
+                idx_df_upper_bound_tim, upper_time_val = self.find_idx_of_time_bound(
+                    upper_bound_time
                 )
-                % (upper_bound_time, upper_time_val)
-            )"""
-            dff_block_of_neuron = list(
-                self.get_dff_traces_of_neuron()[
-                    idx_df_lower_bound_time:idx_df_upper_bound_tim
-                ][self.cell_name]
-            )
-            # print(dff_block_of_neuron) - only one dff block, so something wrong upstream
-            list_of_lists.append(dff_block_of_neuron)
-            # only getting the dff, not considering the relative time, just absolute time
-            # now append this
+                """print(
+                    (
+                        "desired END time to extract dff traces from: %s, actual time extracted: %s"
+                    )
+                    % (upper_bound_time, upper_time_val)
+                )"""
+                dff_block_of_neuron = list(
+                    self.get_dff_traces_of_neuron()[
+                        idx_df_lower_bound_time:idx_df_upper_bound_tim
+                    ][self.cell_name]
+                )
+                # print(dff_block_of_neuron) - only one dff block, so something wrong upstream
+                list_of_lists.append(dff_block_of_neuron)
+                # only getting the dff, not considering the relative time, just absolute time
+                # now append this
+            else:
+                self.events_omitted += 1
+                pass
         return list_of_lists  # this is a 2d list - SCOPE OF THIS WAS INNER
 
     def trim_grouped_df(self, grouped_df):
@@ -275,16 +298,12 @@ class EventTraces(Neuron):  # for one combo
 
     def process_dff_traces_by(self):
         print("Currently processing dff traces for all groups...")
-        groupby_list = []
 
-        for groupby_key, value in self.groupby_dict.items():
-            groupby_list.append(value)
+        print("groupby list: ", self.groupby_list)
 
-        print("groupby list: ", groupby_list)
-
-        grouped_table = self.get_abet().groupby(groupby_list)
-        print("abet file: ", self.get_abet().head())
-        print(grouped_table.groups)
+        grouped_table = self.get_abet().groupby(self.groupby_list)
+        # print("abet file: ", self.get_abet().head())
+        # print(grouped_table.groups)
         # print(type(grouped_table.groups))
 
         # Now have list o what to group by, say: forced small
@@ -297,59 +316,69 @@ class EventTraces(Neuron):  # for one combo
         # print(x_axis)
         # print(len(x_axis))
 
+        # SUBCOMBO PROCESSING
         for key, val in grouped_table.groups.items():
+            # make sure to not include subcombos that have nans in it
+            if "nan" not in str(key):
 
-            number_of_event_appearances = len(list(val))
-            # print(key, ": ", list(val))
-            self.alleventracesforacombo_eventcomboname_dict[
-                key
-            ] = self.stack_dff_traces_of_group(
-                list(val), self.start_choice_or_collect_times
-            )
-            ### Before converting it to a df, we need to store this 2d array somewhere
-            ### and store the corresponding avg traces too
-            """Perform some process on this dict you just updated"""
-            # ??????Necessary???
+                number_of_event_appearances = len(list(val))
+                # print(key, ": ", list(val))
+                self.alleventracesforacombo_eventcomboname_dict[
+                    key
+                ] = self.stack_dff_traces_of_group(
+                    list(val), self.start_choice_or_collect_times
+                )
+                ### Before converting it to a df, we need to store this 2d array somewhere
+                ### and store the corresponding avg traces too
+                """Perform some process on this dict you just updated"""
+                # ??????Necessary???
 
-            # converting that 2d list of lists into df
-            group_df = pd.DataFrame.from_records(
-                self.alleventracesforacombo_eventcomboname_dict[key]
-            )
-            group_df = self.trim_grouped_df(group_df)
+                # converting that 2d list of lists into df
+                group_df = pd.DataFrame.from_records(
+                    self.alleventracesforacombo_eventcomboname_dict[key]
+                )
+                group_df = self.trim_grouped_df(group_df)
 
-            # Doing some editing on this df
-            group_df = Utilities.rename_all_col_names(group_df, x_axis)
+                # Doing some editing on this df
+                group_df = Utilities.rename_all_col_names(group_df, x_axis)
+                print(
+                    "Event %s has %s events omitted." % (str(key), self.events_omitted)
+                )
+                print("Dimensions of grouped df:", (group_df.shape))
+                group_df.insert(
+                    loc=0,
+                    column="Event #",
+                    value=Utilities.make_value_list_for_col(
+                        "Event", number_of_event_appearances - self.events_omitted
+                    ),
+                )
 
-            group_df.insert(
-                loc=0,
-                column="Event #",
-                value=Utilities.make_value_list_for_col(
-                    "Event", number_of_event_appearances
-                ),
-            )
+                # print(group_df)
+                # print(type(key))
+                # making a path for this df to go to (within session path)
 
-            # print(group_df)
-            # print(type(key))
-            # making a path for this df to go to (within session path)
-            new_path = os.path.join(
-                self.session_path,
-                "SingleCellAlignmentData",
-                self.cell_name,
-                self.get_event_traces_name(),
-                "_".join(str(i) for i in list(key)),
-            )
-            ### Insert to aligned dff dict that corresponds to this object
-            # self.aligned_dff_dict[self.get_event_traces_name] = group_df
+                combo_name = str(key)
 
-            os.makedirs(new_path, exist_ok=True)
-            name_of_csv = "plot_ready.csv"
-            group_df.to_csv(os.path.join(new_path, name_of_csv), index=False)
-            csv_path = os.path.join(new_path, name_of_csv)
+                new_path = os.path.join(
+                    self.session_path,
+                    "SingleCellAlignmentData",
+                    self.cell_name,
+                    self.get_event_traces_name(),
+                    combo_name,
+                )
+                ### Insert to aligned dff dict that corresponds to this object
+                # self.aligned_dff_dict[self.get_event_traces_name] = group_df
 
-            ### Add on analysis here ###
-            # 1)
-            Utilities.avg_cell_eventrace(
-                csv_path, self.cell_name, plot=True, export_avg=True
-            )
-            # 2)
-            #
+                os.makedirs(new_path, exist_ok=True)
+                name_of_csv = "plot_ready.csv"
+                csv_path = os.path.join(new_path, name_of_csv)
+                group_df.to_csv(csv_path, index=False)
+
+                ### Add on analysis here ###
+                # 1)
+                Utilities.avg_cell_eventrace(
+                    csv_path, self.cell_name, plot=True, export_avg=True
+                )
+                self.events_omitted = 0  # make sure the events omitted resets after ever subcombo within an eventtrace
+            else:
+                print("WILL NOT INCLUDE %s" % (str(key)))
