@@ -3,9 +3,10 @@ import os
 from typing import List
 from preprocess import preprocess
 
-ROOT_DIR = Path(
-    r"/media/rory/PTP Inscopix 3/Inscopix_to_Analyze"
-)  # change this path to where your videos are stored
+ROOT_DIR = Path(r"/media/rory/Nathen's Fantom/Inscopix_to_Analyze")
+# ^Change this path to where your videos are stored
+dir_for_processed_vids = Path(r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#4")
+# ^Change this path to where you want preprocessed files stored
 
 
 def find_video_paths(root_directory: Path) -> List[Path]:
@@ -24,9 +25,6 @@ def find_video_paths(root_directory: Path) -> List[Path]:
     # print(*vids, sep="\n")
     vids  # reverse just to try to get a less huge file on first iter
     return vids
-
-
-dir_for_processed_vids = Path(r"/media/rory/RDT VIDS/PTP_Inscopix_#3")
 
 
 def vids_to_process(dir: Path) -> List[Path]:
@@ -57,25 +55,25 @@ def generate_output_dir(input_video_path: Path) -> Path:
     Returns:
         Path: Path to directory where all preprocessed files will be saved
     """
-    # change this to alter the location of the preprocessed files
-    # example: /media/rory/PTP Inscopix 1/Inscopix/Raw Inscopix Data Files/BLA-Insc-3/Good Sessions/Session-20210216-173241-BLA-Insc-3/2021-02-16-17-39-50_video.isxd
-    # /media/rory/PTP Inscopix 3/Inscopix_to_Analyze/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1/2021-05-10-09-45-37_video_BLA-Insc-5_RM_D1.isxd
-    name_folder = input_video_path.split("/")[5]
-    name_session = input_video_path.split("/")[6]
-    name_file = input_video_path.split("/")[7].replace(".isxd", "")
+    # OLD EXAMPLE 9/20/21: /media/rory/PTP Inscopix 1/Inscopix/Raw Inscopix Data Files/BLA-Insc-3/Good Sessions/Session-20210216-173241-BLA-Insc-3/2021-02-16-17-39-50_video.isxd
+
+    # NEW EXAMPLE 11/19/21: /media/rory/Nathen's Fantom/Inscopix_to_Analyze/BLA-Insc-11/PR D1/Session-20211108-113157/2021-11-08-11-34-35_video_green.isxd
+
+    ################### Change this to alter the location of the preprocessed files ###############################
+    mouse_name = input_video_path.split("/")[5]
+    session_type = input_video_path.split("/")[6]
+    session_name = input_video_path.split("/")[7]
+    ###################### Change this to alter the location of the preprocessed files ############################
     outdir = Path(
-        "/media/rory/RDT VIDS/PTP_Inscopix_#3/%s/%s/%s"
-        % (name_folder, name_session, name_file)
+        f"{dir_for_processed_vids}/{mouse_name}/{session_type}/{session_name}"
     )
     outdir.mkdir(exist_ok=True, parents=True)
     return outdir
 
 
 def main() -> None:
-    vids = find_video_paths(ROOT_DIR)
-    # print(*vids, sep="\n")
-    # print(len(vids))
 
+    vids = find_video_paths(ROOT_DIR)
     vids_left = vids_to_process(dir_for_processed_vids)
     print(vids_left)
     vids_filtered = []

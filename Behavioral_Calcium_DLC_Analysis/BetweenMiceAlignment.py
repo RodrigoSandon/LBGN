@@ -79,6 +79,7 @@ In this case, add conditionals to limit the data extraction extraction process.
 
 """
 
+from _typeshed import Self
 from typing import List
 from pathlib import Path
 import re
@@ -89,19 +90,58 @@ class BetweenMiceAligment:
     Functionality goes here.
     """
 
-    def __init__(self, avg_cell_traces_filename, **kwargs):
-        """Only sublevel processing argument names you can include."""
-        allowed_parameters = ["root", "mice", "sessions", "combos", "subcombos"]
-        self.avg_cell_traces_filename = avg_cell_traces_filename
-        self.data_hierarchy_d = (
-            {}
-        )  # Very important, dictates how folder/file structure will be
+    def __init__(self, align_all: bool, align_all_subset: bool, align_paths: bool):
+        self.avaliable_parameters_to_focus = ["mice", "sessions", "combos", "subcombos"]
 
-        for key, val in kwargs.items():
-            valid_param = [i for i in allowed_parameters if (i in key)]
-            if bool(valid_param) == True:
-                self.key = key
-        # ^the check that allows parameters to be used
+        if align_all == True and align_all_subset == False and align_paths == False:
+            # Run entire database, don't consider any flexibility
+            pass
+
+        elif align_all == False and align_all_subset == True and align_paths == False:
+            # Run entire database, flexibility on what to acquire
+
+            params = input(
+                f"Choose which parameters you care about: {' '.join(self.avaliable_parameters_to_focus)}"
+                + "\nType 'done' to indicate your done."
+            )
+
+            done = None
+            params_to_focus = ()  # order matters, so a tuple
+            while done != "done":
+                new_input = input()
+                params_to_focus.check_and_append(params_to_focus, new_input)
+
+            for i in params_to_focus:
+                specified_params = input(f"Which {i} are you focused on?")
+
+        elif align_all == False and align_all_subset == False and align_paths == True:
+            # Don't run entire database, align from the level of specificity the user wants
+            pass
+
+    def check_if_string_in_list(self, input_str: str) -> bool:
+        check = [i for i in self.avaliable_parameters_to_focus if (i == input_str)]
+        return bool(check)
+
+    def check_and_append(self, my_lst: List, input_str: str) -> None:
+        if BetweenMiceAligment.check_if_string_in_list(input_str) == True:
+            my_lst.append(input_str)
+        else:
+            print(f"{input_str} is not a valid parameter!")
+
+    def check_if_root(self, key):
+        if "root" in key:
+            return True
+        else:
+            False
+
+    def set_root_name(self, key, new_name):
+        if BetweenMiceAligment.check_if_root(key) == True:
+            self.data_hierarchy[new_name]
+        else:
+            pass
+
+    def create_hierarchy_root(self):
+        pass
 
     def find_mice_paths(self):
         pass
@@ -140,13 +180,7 @@ class Driver:
         """
         Create a BetweenMiceAlignment object.
         """
-        process_big = BetweenMiceAligment(
-            ROOT_MICE_PATH,
-            mice=mice,
-            sessions=sessions,
-            combos=combos,
-            avg_cell_traces_filename="concat_cells.csv",
-        )
+        process_big = BetweenMiceAligment(root=ROOT_MICE_PATH)
 
 
 class Cleaner:
@@ -175,3 +209,20 @@ if __name__ == "__main__":
         self.sessions_tofind = sessions_tofind
         self.combos_tofind = combos_tofind
         self.avg_cell_traces_filename = avg_cell_traces_filename"""
+
+    """def __init__(self, avg_cell_traces_filename, **kwargs):
+        #Only sublevel processing argument names you can include.
+        allowed_parameters = ["root", "mice", "sessions", "combos", "subcombos"]
+        self.avg_cell_traces_filename = avg_cell_traces_filename
+        self.data_hierarchy = (
+            {}
+        )  # Very important, dictates how folder/file structure will be
+
+        for key, val in kwargs.items():
+            valid_param = [i for i in allowed_parameters if (i in key)]
+            if bool(valid_param) == True:
+                self.key = key
+                BetweenMiceAligment.set_root_name(key, new_name="BetweenMiceAlignment")
+                # ^if not root, skip this making it in dict
+
+        # ^the check that allows parameters to be used"""
