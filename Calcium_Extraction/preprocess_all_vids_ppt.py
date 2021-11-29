@@ -35,7 +35,7 @@ def vids_to_process(dir: Path) -> List[Path]:
         # print(dirs)
         for i in dirs:
             # print(os.listdir(os.path.join(root, i)))
-            if (len(os.listdir(os.path.join(root, i))) < 6) and i.startswith(
+            if (len(os.listdir(os.path.join(root, i))) < 7) and i.startswith(
                 "Session"
             ):  # less than 6 means the isx file didnt fully process yet
                 vids_left_to_process.append(i)
@@ -74,24 +74,36 @@ def generate_output_dir(input_video_path: Path) -> Path:
 def main() -> None:
 
     vids = find_video_paths(ROOT_DIR)
-    vids_left = vids_to_process(dir_for_processed_vids)
-    print(vids_left)
-    vids_filtered = []
+    # print("ALL VIDS TO BE PROCESSED?:")
+    # print(vids)
+    # vids_left = vids_to_process(dir_for_processed_vids)
+    # or Manually insert which vid paths you have left
+    vids_left_raw_paths = [
+        "/media/rory/Nathen's Fantom/Inscopix_to_Analyze/BLA-Insc-9/RDT D1/Session-20211026-102032_bla_insc_9_rdt_d1/2021-10-26-10-24-47_video_green.isxd",
+        "/media/rory/Nathen's Fantom/Inscopix_to_Analyze/BLA-Insc-9/RDT D2/Session-20211031-104623_BLA-insc-9_RDT_D2/2021-10-31-10-51-56_video_green.isxd",
+        "/media/rory/Nathen's Fantom/Inscopix_to_Analyze/BLA-Insc-9/RDT D3/Session-20211103-103131_bla_insc_9_rdt_d3/2021-11-03-10-43-32_video_green.isxd",
+        "/media/rory/Nathen's Fantom/Inscopix_to_Analyze/BLA-Insc-9/RM D1/BLA-Insc-9_RM_D1_Session-20211008-111303/2021-10-08-11-18-54_video_green.isxd",
+        "/media/rory/Nathen's Fantom/Inscopix_to_Analyze/BLA-Insc-9/Shock Test/Session-20211110-100554_BLA_insc_9_SHOCK_TEST/2021-11-10-10-13-32_video_green.isxd",
+        "/media/rory/Nathen's Fantom/Inscopix_to_Analyze/BLA-Insc-11/PR D1/Session-20211108-113157/2021-11-08-11-34-35_video_green.isxd",
+    ]
+    # print(vids_left)
+    vids_to_process = []
 
     for vid in vids:
-        name_to_locate = vid.split("/")[7]
-        if name_to_locate in vids_left:
-            vids_filtered.append(vid)
+        if vid in vids_left_raw_paths:
+            vids_to_process.append(vid)
 
     print("VIDS LEFT:")
-    print(*vids_filtered, sep="\n")
+    # print(*vids_to_process, sep="\n")
 
-    if len(vids_filtered) != 0:
-        for i in vids_filtered:
+    if (
+        len(vids_left_raw_paths) == 0
+    ):  # if not specifying which specific vids to process
+        for i in vids:
             output_dir = generate_output_dir(i)
             preprocess(in_path=i, out_dir=output_dir)
-    else:
-        for i in vids:
+    else:  # if are specifying
+        for i in vids_left_raw_paths:
             print(i)
             output_dir = generate_output_dir(i)
             preprocess(in_path=i, out_dir=output_dir)

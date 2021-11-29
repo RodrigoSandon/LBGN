@@ -329,7 +329,7 @@ def main():
     1) overwrite function, overwrite existing files or no? 
     -saves time if just adding on things curr folder
     """
-
+    # Needs to be left like this because where the raw files are can change
     ROOT_PATH = Path(r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-7")
     RAW_ROOT_PATH = Path(r"/media/rory/PTP Inscopix 3/Inscopix_to_Analyze/BLA-Insc-7")
 
