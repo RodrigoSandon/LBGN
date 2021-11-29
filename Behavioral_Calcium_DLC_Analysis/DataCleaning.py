@@ -15,8 +15,6 @@ def dir_del_recursively(foldername, root) -> None:
     print("Number of BetweenCellAlignmentData folders deleted:", deleted)
 
 
-ROOT = r"/media/rory/Padlock_DT/BLA_Analysis"
-
 # dir_del_recursively("BetweenCellAlignmentData", ROOT)
 def delete_recursively(root_path, name_endswith_list):
 
@@ -39,6 +37,7 @@ def purge(dir, pattern):
             print(os.path.join(dir, f))
 
 
-del_list = ["see_if_right.txt", "categorized_cell_avg_traces.txt"]
+ROOT = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData"
+del_list = ["all_concat_cells_truncated.csv"]
 
 delete_recursively(ROOT, del_list)

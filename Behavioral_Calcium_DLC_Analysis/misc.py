@@ -1,5 +1,6 @@
 import os
 import os.path as path
+import pandas as pd
 
 
 def walk(top, topdown=True, onerror=None, followlinks=False, maxdepth=None):
@@ -39,5 +40,15 @@ def walk(top, topdown=True, onerror=None, followlinks=False, maxdepth=None):
 
 
 session_count = 0
-for root, dirs, files in walk("/media/rory/Padlock_DT/BLA_Analysis", maxdepth=4):
-    print(root)
+"""for root, dirs, files in walk("/media/rory/Padlock_DT/BLA_Analysis", maxdepth=4):
+    print(root)"""
+
+df_path = "/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/Late Shock D2/Block_Omission_Choice Time (s)/(1.0, 'ITI')/all_concat_cells.csv"
+
+df = pd.read_csv(df_path)
+print(df.tail())
+print(len(df))
+empty_val = df.iloc[200, df.columns.get_loc("BLA-Insc-2_C04")]
+string_mode = str(df.iloc[200, df.columns.get_loc("BLA-Insc-2_C04")])
+empty_val_type = type(df.iloc[200, df.columns.get_loc("BLA-Insc-2_C04")])
+print(empty_val, string_mode, empty_val_type)

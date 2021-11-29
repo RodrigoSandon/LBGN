@@ -141,7 +141,7 @@ def concat_all_cells_across_similar_sessions(
                     )
                 except ValueError:
                     # print(between_mice_d[session_type][combo][subcombo])
-                    print(session_type, combo, subcombo)
+                    print("JAGGED ARRAYS IN:", session_type, combo, subcombo)
                     d = between_mice_d[session_type][combo][subcombo]
                     concatenated_cells_df = pd.DataFrame(
                         dict([(k, pd.Series(v)) for k, v in d.items()])
@@ -156,10 +156,10 @@ def concat_all_cells_across_similar_sessions(
 
 def main():
     ROOT_PATH = Path(r"/media/rory/Padlock_DT/BLA_Analysis")
-
-    session_types = [
-        "PR D1",
-        "PR D2",
+    """
+    SESSION TYPES: 
+        "PR D1", <- will never appear as of 11/29/21
+        "PR D2", <- will never appear as of 11/29/21
         "Pre-RDT RM",
         "RDT D1",
         "RDT D2",
@@ -173,11 +173,12 @@ def main():
         "RM D8",
         "RM D9",
         "RM D10",
-        "Shock Test",
+        "Shock Test", <- will never appear as of 11/29/21
         "Late Shock D1",
         "Late Shock D2",
-    ]
-    # PR D1, PR D2, and Shock Test will never appear as folders for now
+    
+    SO IN TOTAL, 15 FOLDERS SHOULD APPEAR 11/29/21
+    """
 
     # file = open(f"{ROOT_PATH}/structure_of_between_mice_alignment.txt", "w+")
 
