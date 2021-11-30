@@ -8,6 +8,8 @@ import pandas as pd
 import seaborn as sns
 import os.path as path
 from scipy import stats
+import Cell
+from operator import attrgetter
 
 
 def walk(top, topdown=True, onerror=None, followlinks=False, maxdepth=None):
@@ -131,7 +133,56 @@ def indv_events_spaghetti_plot(lst_of_indv_event_traces_of_cell):
             pass
 
 
+def sort_cells(
+    df, file_path, unknown_time_min, unknown_time_max, reference_pair: dict, hertz: int
+):
+    df = pd.read_csv(file_path)
+
+    # sorted_cells = {}
+    sorted_cells = []
+
+    for col in df.columns:
+        cell = Cell.Cell(
+            col,
+            list(df[col]),
+            unknown_time_min,
+            unknown_time_max,
+            reference_pair,
+            hertz,
+        )
+        # sorted_cells[cell.cell_name] = cell
+        sorted_cells.append(cell)
+
+    # SORT THE LIST of CELL OBJECTS BASE ON ITS Z_SCORE ATTRIBUTE
+    # print(sorted_cell_objs)
+    sorted_cells.sort(key=attrgetter("z_score"))
+    """sorted_cells = {
+        k: v for k, v in sorted(sorted_cells.values(), key=attrgetter("z_score"))
+    }"""
+
+    # ORDERED CELL OBJECTS, NOW TO DATA TYPE
+    # its list of cell objs
+    def convert_lst_to_d(lst):
+        res_dct = {}
+        for i in lst:
+            print(i.cell_name)
+            res_dct[i.cell_name] = i.dff_traces
+
+        return res_dct
+
+    sorted_cells_d = convert_lst_to_d(sorted_cells)
+
+    # check if being sorted
+    """for i in sorted_cells:
+        print(i.cell_name)"""
+
+    df = pd.DataFrame.from_records(sorted_cells_d)
+
+    return df
+
+
 def heatmap(
+    df,
     file_path,
     unknown_time_min,
     unknown_time_max,
@@ -145,9 +196,8 @@ def heatmap(
 ):
 
     try:
-        new_path = file_path.replace(".csv", "_heatmap_baseline-10_-1_gauss1.5.png")
+        new_path = file_path.replace(".csv", "_sorted_hm_base-10_-1_gauss1.5.png")
         # new_path_csv = file_path.replace(".csv", "_heatmap_baseline-10_-1_gauss2.csv")
-        df = pd.read_csv(file_path)
         # DONT TRANSPOSE FOR STANDARDIZATION
         df = custom_standardize(
             df, unknown_time_min, unknown_time_max, reference_pair, hertz
@@ -157,6 +207,7 @@ def heatmap(
         if cols_to_plot is not None:
             df = df[cols_to_plot]
 
+        print("DATAFRAME GOING INTO HEATMAP FUNC:")
         print(df.head())
         # df.to_csv(new_path_csv, index=False)
         # BUT DONT TRANSOSE AGAIN
@@ -171,11 +222,12 @@ def heatmap(
 
 # For averaged dff trace of cell, across cells
 def spaghetti_plot(
-    file_path, unknown_time_min, unknown_time_max, reference_pair, hertz
+    df, file_path, unknown_time_min, unknown_time_max, reference_pair, hertz
 ):
     try:
-        new_path = file_path.replace(".csv", "_spaghetti_baseline-10_-1_gauss1.5.png")
-        df = pd.read_csv(file_path)
+        new_path = file_path.replace(
+            ".csv", "_sorted_spaghetti_base-10_-1_gauss1.5.png"
+        )
         # DONT TRANSPOSE FOR STANDARDIZATION
         df = custom_standardize(
             df, unknown_time_min, unknown_time_max, reference_pair, hertz
@@ -248,8 +300,9 @@ def convert_secs_to_idx(
     # first find the time difference between reference and unknown
     # Note: reference will
     idx_start = (unknown_time_min * hertz) + reference_idx
-    idx_end = (unknown_time_max * hertz) + reference_idx + 1
-    # ^plus 1 bc getting sublist is exclusive
+    # idx_end = (unknown_time_max * hertz) + reference_idx + 1
+    # ^plus 1 bc getting sublist is exclusive? 11/30/21
+    idx_end = (unknown_time_max * hertz) + reference_idx
     return int(idx_start), int(idx_end)
 
 
@@ -291,7 +344,24 @@ def main():
 
 def process_one_table():
     csv_path = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
+    df = pd.read_csv(csv_path)
+    print("BEFORE SORTING:")
+    print(df.head())
+
+    df_sorted = sort_cells(
+        df,
+        csv_path,
+        unknown_time_min=0.0,
+        unknown_time_max=3.0,
+        reference_pair={0: 100},
+        hertz=10,
+    )
+
+    print("AFTER SORTING:")
+    print(df_sorted.head())
+
     heatmap(
+        df_sorted,
         csv_path,
         unknown_time_min=-10.0,
         unknown_time_max=-1.0,
@@ -301,6 +371,7 @@ def process_one_table():
         vmax=2.5,
     )
     spaghetti_plot(
+        df_sorted,
         csv_path,
         unknown_time_min=-10.0,
         unknown_time_max=-1.0,
