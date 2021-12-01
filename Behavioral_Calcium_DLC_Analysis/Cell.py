@@ -15,7 +15,7 @@ class Cell:
     ):
         self.cell_name = cell_name
         self.dff_traces = dff_traces
-        self.cell_dict = {cell_name: dff_traces}
+        # self.cell_dict = {cell_name: dff_traces}
 
         self.unknown_time_min = unknown_time_min
         self.unknown_time_max = unknown_time_max

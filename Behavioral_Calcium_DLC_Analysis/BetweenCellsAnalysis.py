@@ -102,7 +102,7 @@ def indv_events_spaghetti_plot(lst_of_indv_event_traces_of_cell):
             # print(df_without_eventcol.head())
             just_event_col = df.loc[:, df.columns == "Event #"]
             # print(just_event_col.head())
-            df_no_eventcol_mod = standardize(df_without_eventcol)
+            df_no_eventcol_mod = custom_standardize(df_without_eventcol)
             df_no_eventcol_mod = gaussian_smooth(df_without_eventcol)
             # print(df_no_eventcol_mod.head())
 
@@ -134,9 +134,8 @@ def indv_events_spaghetti_plot(lst_of_indv_event_traces_of_cell):
 
 
 def sort_cells(
-    df, file_path, unknown_time_min, unknown_time_max, reference_pair: dict, hertz: int
+    df, unknown_time_min, unknown_time_max, reference_pair: dict, hertz: int
 ):
-    df = pd.read_csv(file_path)
 
     # sorted_cells = {}
     sorted_cells = []
@@ -155,39 +154,42 @@ def sort_cells(
 
     # SORT THE LIST of CELL OBJECTS BASE ON ITS Z_SCORE ATTRIBUTE
     # print(sorted_cell_objs)
-    sorted_cells.sort(key=attrgetter("z_score"))
-    """sorted_cells = {
-        k: v for k, v in sorted(sorted_cells.values(), key=attrgetter("z_score"))
-    }"""
+    sorted_cells.sort(key=attrgetter("z_score"), reverse=True)
 
     # ORDERED CELL OBJECTS, NOW TO DATA TYPE
     # its list of cell objs
     def convert_lst_to_d(lst):
         res_dct = {}
-        for i in lst:
-            print(i.cell_name)
+        for count, i in enumerate(lst):
+            print("CURRENT CELL:", i.cell_name)
+            # print("CURRENT DFF TRACE BEING ADDED:", i.dff_traces[0:5])
+            # print(f"CURRENT {i.cell_name} Z score:", i.z_score)
             res_dct[i.cell_name] = i.dff_traces
 
+        print(f"NUMBER OF CELLS IN HEATMAP: {len(lst)}")
         return res_dct
 
     sorted_cells_d = convert_lst_to_d(sorted_cells)
-
+    """print(
+        "first k : v in dict:",
+        list(sorted_cells_d.keys())[0],
+        list(sorted_cells_d.values())[0],
+    )"""
     # check if being sorted
     """for i in sorted_cells:
         print(i.cell_name)"""
 
-    df = pd.DataFrame.from_records(sorted_cells_d)
+    df_mod = pd.DataFrame.from_dict(
+        sorted_cells_d
+    )  # from_records automatically sorts by key smh
 
-    return df
+    return df_mod
 
 
 def heatmap(
     df,
     file_path,
-    unknown_time_min,
-    unknown_time_max,
-    reference_pair: dict,
-    hertz: int,
+    out_path,
     cols_to_plot: Optional[List[str]] = None,
     cmap: str = "coolwarm",
     vmin: Optional[float] = None,
@@ -196,48 +198,31 @@ def heatmap(
 ):
 
     try:
-        new_path = file_path.replace(".csv", "_sorted_hm_base-10_-1_gauss1.5.png")
-        # new_path_csv = file_path.replace(".csv", "_heatmap_baseline-10_-1_gauss2.csv")
-        # DONT TRANSPOSE FOR STANDARDIZATION
-        df = custom_standardize(
-            df, unknown_time_min, unknown_time_max, reference_pair, hertz
-        )
-        # TRANSPOSE FOR STANDARDIZATION
-        df = gaussian_smooth(df.T)
         if cols_to_plot is not None:
             df = df[cols_to_plot]
 
-        print("DATAFRAME GOING INTO HEATMAP FUNC:")
-        print(df.head())
-        # df.to_csv(new_path_csv, index=False)
-        # BUT DONT TRANSOSE AGAIN
-        sns.heatmap(df, vmin=vmin, vmax=vmax, cmap=cmap, **heatmap_kwargs)
-        plt.savefig(new_path)
+        ax = sns.heatmap(
+            df.transpose(), vmin=vmin, vmax=vmax, cmap=cmap, **heatmap_kwargs
+        )
+        ax.set_xticklabels(ax.get_xmajorticklabels(), fontsize=8)
+        ax.set_yticklabels(ax.get_ymajorticklabels(), fontsize=5)
+        ax.tick_params(left=True, bottom=True)
+
+        ax.set_ylabel("Neuron #")
+        ax.set_xlabel("Time relative to choice (s)")
+        plt.savefig(out_path)
         plt.close()
+
     except ValueError as e:
+
         print("VALUE ERROR:", e)
         print(f"VALUE ERROR FOR {file_path} --> MAKING HEATMAP")
         pass
 
 
 # For averaged dff trace of cell, across cells
-def spaghetti_plot(
-    df, file_path, unknown_time_min, unknown_time_max, reference_pair, hertz
-):
+def spaghetti_plot(df, file_path, out_path):
     try:
-        new_path = file_path.replace(
-            ".csv", "_sorted_spaghetti_base-10_-1_gauss1.5.png"
-        )
-        # DONT TRANSPOSE FOR STANDARDIZATION
-        df = custom_standardize(
-            df, unknown_time_min, unknown_time_max, reference_pair, hertz
-        )
-        # make sure you're taking guassian by the axis=1, so by columns when using
-        # .apply for this gaussian_smooth() function
-        # TRANSPOSE FOR STANDARDIZATION
-        df = gaussian_smooth(df.T)
-        # TRANSPOSE BACK FOR SPAGHETTI
-        df = df.T
         x = list(df.index)
         for cell in df.columns:
             # print("cell: ", cell)
@@ -245,7 +230,7 @@ def spaghetti_plot(
         number_cells = len(df.T)
         plt.title("DF/F (n=%s)" % (number_cells))
         plt.locator_params(axis="x", nbins=20)
-        plt.savefig(new_path)
+        plt.savefig(out_path)
         plt.close()
 
     except ValueError as e:
@@ -319,6 +304,16 @@ def gaussian_smooth(df, sigma: float = 1.5):
     return df.apply(gaussian_filter1d, sigma=sigma, axis=0)
 
 
+def change_cell_names(df):
+
+    for col in df.columns:
+
+        df = df.rename(columns={col: col.replace("BLA-Insc-", "")})
+        # print(col)
+
+    return df
+
+
 def main():
 
     ROOT_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData"
@@ -345,12 +340,32 @@ def main():
 def process_one_table():
     csv_path = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
     df = pd.read_csv(csv_path)
-    print("BEFORE SORTING:")
+
+    df = change_cell_names(df)
+    print("AFTER NAME CHANGE:")
+    print(df.head())
+
+    df = custom_standardize(
+        df,
+        unknown_time_min=-10.0,
+        unknown_time_max=-1.0,
+        reference_pair={0: 100},
+        hertz=10,
+    )
+    print("AFTER STANDARDIZATION:")
+    print(df.head())
+
+    # SMOOTHING NEEDS TRANSPOSE BC SMOOTHING RELATIVE TO EACH CELL'S BASELINE (so axis should be 1
+    # bc smoothing across columns)
+    df = gaussian_smooth(df.T)
+    # THEN TRANSPOSE IT BACK
+    df = df.T
+
+    print("AFTER SMOOTHING:")
     print(df.head())
 
     df_sorted = sort_cells(
         df,
-        csv_path,
         unknown_time_min=0.0,
         unknown_time_max=3.0,
         reference_pair={0: 100},
@@ -360,23 +375,21 @@ def process_one_table():
     print("AFTER SORTING:")
     print(df_sorted.head())
 
+    hm_x_axis_interval = 10
+    # np.arange(-10, 10, 0.1).tolist()
     heatmap(
         df_sorted,
         csv_path,
-        unknown_time_min=-10.0,
-        unknown_time_max=-1.0,
-        reference_pair={0: 100},
-        hertz=10,
+        out_path=csv_path.replace(".csv", "_sorted_hm_base-10_-1_gauss1.5.png"),
         vmin=-2.5,
         vmax=2.5,
+        xticklabels=hm_x_axis_interval,
     )
+
     spaghetti_plot(
         df_sorted,
         csv_path,
-        unknown_time_min=-10.0,
-        unknown_time_max=-1.0,
-        reference_pair={0: 100},
-        hertz=10,
+        out_path=csv_path.replace(".csv", "_sorted_spaghetti_base-10_-1_gauss1.5.png"),
     )
 
 
