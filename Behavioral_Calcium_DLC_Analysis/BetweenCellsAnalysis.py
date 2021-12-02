@@ -1,4 +1,3 @@
-from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import glob, os
@@ -6,46 +5,9 @@ from typing import List, Optional
 from numpy.core.fromnumeric import mean
 import pandas as pd
 import seaborn as sns
-import os.path as path
 from scipy import stats
 import Cell
 from operator import attrgetter
-
-
-def walk(top, topdown=True, onerror=None, followlinks=False, maxdepth=None):
-    islink, join, isdir = path.islink, path.join, path.isdir
-
-    try:
-        names = os.listdir(top)
-    except OSError as err:
-        if onerror is not None:
-            onerror(err)
-        return
-
-    dirs, nondirs = [], []
-    for name in names:
-        if isdir(join(top, name)):
-            dirs.append(name)
-        else:
-            nondirs.append(name)
-
-    if topdown:
-        yield top, dirs, nondirs
-
-    if maxdepth is None or maxdepth > 1:
-        for name in dirs:
-            new_path = join(top, name)
-            if followlinks or not islink(new_path):
-                for x in walk(
-                    new_path,
-                    topdown,
-                    onerror,
-                    followlinks,
-                    None if maxdepth is None else maxdepth - 1,
-                ):
-                    yield x
-    if not topdown:
-        yield top, dirs, nondirs
 
 
 def find_paths_endswith(root_path, endswith) -> List:
@@ -153,7 +115,6 @@ def sort_cells(
         sorted_cells.append(cell)
 
     # SORT THE LIST of CELL OBJECTS BASE ON ITS Z_SCORE ATTRIBUTE
-    # print(sorted_cell_objs)
     sorted_cells.sort(key=attrgetter("z_score"), reverse=True)
 
     # ORDERED CELL OBJECTS, NOW TO DATA TYPE
@@ -161,23 +122,15 @@ def sort_cells(
     def convert_lst_to_d(lst):
         res_dct = {}
         for count, i in enumerate(lst):
-            print("CURRENT CELL:", i.cell_name)
+            # print("CURRENT CELL:", i.cell_name)
             # print("CURRENT DFF TRACE BEING ADDED:", i.dff_traces[0:5])
             # print(f"CURRENT {i.cell_name} Z score:", i.z_score)
             res_dct[i.cell_name] = i.dff_traces
 
-        print(f"NUMBER OF CELLS IN HEATMAP: {len(lst)}")
+        print(f"NUMBER OF CELLS: {len(lst)}")
         return res_dct
 
     sorted_cells_d = convert_lst_to_d(sorted_cells)
-    """print(
-        "first k : v in dict:",
-        list(sorted_cells_d.keys())[0],
-        list(sorted_cells_d.values())[0],
-    )"""
-    # check if being sorted
-    """for i in sorted_cells:
-        print(i.cell_name)"""
 
     df_mod = pd.DataFrame.from_dict(
         sorted_cells_d
@@ -252,13 +205,12 @@ def custom_standardize(
 ):
     # print(df.head())
     for col in df.columns:
-        idx_start, idx_end = convert_secs_to_idx(
-            unknown_time_min, unknown_time_max, reference_pair, hertz
+        subwindow = create_subwindow_for_col(
+            df, col, unknown_time_min, unknown_time_max, reference_pair, hertz
         )
-        arr_of_focus = df[col][idx_start:idx_end]
-        mean_for_cell = stats.tmean(arr_of_focus)
-        stdev_for_cell = stats.tstd(arr_of_focus)
-        # print(arr_of_focus)
+        mean_for_cell = stats.tmean(subwindow)
+        stdev_for_cell = stats.tstd(subwindow)
+        # print(subwindow)
         # print(f"Mean {mean_for_cell} for cell {col}")
         # print(stdev_for_cell)
 
@@ -314,6 +266,59 @@ def change_cell_names(df):
     return df
 
 
+def scatter_plot(subdf, out_path):
+    # Note: the time column has been made by now for this df
+    for col in df.columns:
+        subdf.plot(kind="scatter", x="Time (s)", y=col)
+
+
+def subdf_of_df(
+    df, unknown_time_min, unknown_time_max, reference_pair, hertz
+) -> pd.DataFrame:
+    """
+    d = {
+        cell_name : [subwindow of dff traces]
+    }
+    """
+    subdf_d = {}
+    for col in df.columns:
+        subdf_d[col] = create_subwindow_for_col(
+            df, col, unknown_time_min, unknown_time_max, reference_pair, hertz
+        )
+    subdf = pd.DataFrame.from_dict(subdf_d)
+
+    return subdf
+
+
+def create_subwindow_for_col(
+    df, col, unknown_time_min, unknown_time_max, reference_pair, hertz
+) -> list:
+    idx_start, idx_end = convert_secs_to_idx(
+        unknown_time_min, unknown_time_max, reference_pair, hertz
+    )
+    subwindow = df[col][idx_start:idx_end]
+
+    return subwindow
+
+
+def insert_time_index_to_df(df):
+    x_axis = np.arange(-10, 10, 0.1).tolist()
+    # end shoudl be 10.1 and not 10 bc upper limit is exclusive
+
+    middle_idx = int(len(x_axis) / 2)
+
+    end_idx = len(x_axis) - 1
+    # print(x_axis[end_idx])
+
+    x_axis[middle_idx] = 0
+    x_axis = [round(i, 1) for i in x_axis]
+
+    df.insert(0, "Time (s)", x_axis)
+    df = df.set_index("Time (s)")
+
+    return df
+
+
 def main():
 
     ROOT_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData"
@@ -326,14 +331,59 @@ def main():
         ROOT_PATH, to_look_for_originally, to_look_for_conditional
     )
     # print(csv_list)
-    for count, file_path in enumerate(csv_list):
+    for count, csv_path in enumerate(csv_list):
 
-        print(f"Working on file {count}: {file_path}")
+        print(f"Working on file {count}: {csv_path}")
 
         try:
-            heatmap(file_path, vmin=-2.5, vmax=2.5)
-            spaghetti_plot(file_path)
+            df = pd.read_csv(csv_path)
+
+            df = change_cell_names(df)
+
+            df = custom_standardize(
+                df,
+                unknown_time_min=-10.0,
+                unknown_time_max=-1.0,
+                reference_pair={0: 100},
+                hertz=10,
+            )
+
+            df = gaussian_smooth(df.T)
+            df = df.T
+
+            # We're essentially gettin the mean of z-score for a time frame to sort
+            df_sorted = sort_cells(
+                df,
+                unknown_time_min=0.0,
+                unknown_time_max=3.0,
+                reference_pair={0: 100},
+                hertz=10,
+            )
+
+            df_sorted = insert_time_index_to_df(df_sorted)
+
+            # Create scatter plot here
+
+            heatmap(
+                df_sorted,
+                csv_path,
+                out_path=csv_path.replace(
+                    ".csv", "_sorted_hm_baseline-10_-1_gauss1.5.png"
+                ),
+                vmin=-2.5,
+                vmax=2.5,
+                xticklabels=20,
+            )
+
+            spaghetti_plot(
+                df_sorted,
+                csv_path,
+                out_path=csv_path.replace(
+                    ".csv", "_sorted_spaghetti_baseline-10_-1_gauss1.5.png"
+                ),
+            )
         except FileNotFoundError:
+            print(f"File {csv_path} was not found!")
             pass
 
 
@@ -342,8 +392,8 @@ def process_one_table():
     df = pd.read_csv(csv_path)
 
     df = change_cell_names(df)
-    print("AFTER NAME CHANGE:")
-    print(df.head())
+    # print("AFTER NAME CHANGE:")
+    # print(df.head())
 
     df = custom_standardize(
         df,
@@ -352,8 +402,8 @@ def process_one_table():
         reference_pair={0: 100},
         hertz=10,
     )
-    print("AFTER STANDARDIZATION:")
-    print(df.head())
+    # print("AFTER STANDARDIZATION:")
+    # print(df.head())
 
     # SMOOTHING NEEDS TRANSPOSE BC SMOOTHING RELATIVE TO EACH CELL'S BASELINE (so axis should be 1
     # bc smoothing across columns)
@@ -361,8 +411,8 @@ def process_one_table():
     # THEN TRANSPOSE IT BACK
     df = df.T
 
-    print("AFTER SMOOTHING:")
-    print(df.head())
+    # print("AFTER SMOOTHING:")
+    # print(df.head())
 
     df_sorted = sort_cells(
         df,
@@ -372,24 +422,40 @@ def process_one_table():
         hertz=10,
     )
 
-    print("AFTER SORTING:")
-    print(df_sorted.head())
+    # print("AFTER SORTING:")
+    # print(df_sorted.head())
 
-    hm_x_axis_interval = 10
-    # np.arange(-10, 10, 0.1).tolist()
+    df_sorted = insert_time_index_to_df(df_sorted)
+    # print("AFTER INDEX CHANGE:")
+    # print(df_sorted.head())
+
     heatmap(
         df_sorted,
         csv_path,
-        out_path=csv_path.replace(".csv", "_sorted_hm_base-10_-1_gauss1.5.png"),
+        out_path=csv_path.replace(".csv", "_sorted_hm_baseline-10_-1_gauss1.5.png"),
         vmin=-2.5,
         vmax=2.5,
-        xticklabels=hm_x_axis_interval,
+        xticklabels=20,
     )
 
     spaghetti_plot(
         df_sorted,
         csv_path,
-        out_path=csv_path.replace(".csv", "_sorted_spaghetti_base-10_-1_gauss1.5.png"),
+        out_path=csv_path.replace(
+            ".csv", "_sorted_spaghetti_baseline-10_-1_gauss1.5.png"
+        ),
+    )
+
+    # Create scatter plot of subwindows of each cell's window of specific event
+    # First create sub df -> bc we don't want to cluster based on the 200 data points only
+    # by 30 data points
+
+    subdf = subdf_of_df(
+        df_sorted,
+        unknown_time_min=0.0,
+        unknown_time_max=3.0,
+        reference_pair={0: 100},
+        hertz=10,
     )
 
 

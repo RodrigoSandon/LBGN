@@ -330,8 +330,8 @@ def main():
     -saves time if just adding on things curr folder
     """
     # Needs to be left like this because where the raw files are can change
-    ROOT_PATH = Path(r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-7")
-    RAW_ROOT_PATH = Path(r"/media/rory/PTP Inscopix 3/Inscopix_to_Analyze/BLA-Insc-7")
+    ROOT_PATH = Path(r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#4/BLA-Insc-13")
+    RAW_ROOT_PATH = Path(r"/media/rory/Nathen's Fantom/Inscopix_to_Analyze/BLA-Insc-13")
 
     # Indicate for what root directory are these utilities for
     util = CalciumPreprocessing(ROOT_PATH, RAW_ROOT_PATH)

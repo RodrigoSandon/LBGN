@@ -20,6 +20,28 @@ class Driver:
         Returns:
         dff traces for a given time window for each accepted cell for each session in each mouse, for a given PTP Inscopix folder
         """
+
+        session_types = [
+            "PR D1",
+            "PR D2",
+            "Pre-RDT RM",
+            "RDT D1",
+            "RDT D2",
+            "RDT D3",
+            "Post-RDT D1",
+            "Post-RDT D2",
+            "Post-RDT D3",
+            "RM D1",
+            "RM D2",
+            "RM D3",
+            "RM D8",
+            "RM D9",
+            "RM D10",
+            "Shock Test",
+            "Late Shock D1",
+            "Late Shock D2",
+        ]
+
         list_of_combos_we_care_about = [
             "Block_Choice Time (s)",
             "Block_Learning Stratergy_Choice Time (s)",
@@ -43,7 +65,7 @@ class Driver:
             "Reward Size_Choice Time (s)",
         ]
 
-        MASTER_ROOT = Path(r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1")
+        MASTER_ROOT = Path(r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#4")
         mouse_paths = [
             os.path.join(MASTER_ROOT, dir)
             for dir in os.listdir(MASTER_ROOT)
@@ -52,24 +74,29 @@ class Driver:
         for mouse_path in mouse_paths:
             print("CURRENT MOUSE PATH: ", mouse_path)
 
+            session_paths = []
+
             MOUSE_PATH = Path(mouse_path)
+            for root, dirs, files in os.walk(MOUSE_PATH):
+                for dir_name in dirs:
+                    for ses_type in session_types:
+                        if (
+                            dir_name.find(ses_type) != -1
+                        ):  # means ses type string was found in dirname
+                            SESSION_PATH = os.path.join(root, dir_name)
+                            session_paths.append(SESSION_PATH)
 
-            ### TODO: Have this loop through all sessions for each mouse
-            session_paths = [
-                os.path.join(MOUSE_PATH, dir)
-                for dir in os.listdir(MOUSE_PATH)
-                if os.path.isdir(os.path.join(MOUSE_PATH, dir))
-                and dir.startswith("Session")
-            ]
-
+            ### TODO: FIND SESSION PATHS
+            print("FOUND SESSION PATHS FOR MOUSE:")
+            print(session_paths)
             for session_path in session_paths:
-
+                print(f"Working on... {session_path}")
                 try:
 
                     session_1 = Session(session_path)
-                    # print(session_1.get_dff_traces().head())
+
                     # now make individual neuron objects for each of the columns
-                    print("Dict of all neurons in session: ", session_1.neurons)
+                    # print("Dict of all neurons in session: ", session_1.neurons)
 
                     # Go into one neuron obj from the neuron dict, call its method that returns a list
                     # but only getting values 0-10 (exclusive)
@@ -85,11 +112,11 @@ class Driver:
                         # print(neuron_obj.get_sample_dff_times())
                         # print(neuron_obj.get_dff_trace())
                         """            neuron_obj.add_aligned_dff_traces(
-                            "Choice Time (s)",
-                            half_of_time_window=10,
-                            trial_type="Trial Type",
-                            reward_size="Reward Size",
-                        )"""
+                                "Choice Time (s)",
+                                half_of_time_window=10,
+                                trial_type="Trial Type",
+                                reward_size="Reward Size",
+                            )"""
                         neuron_obj.add_aligned_dff_traces(
                             "Choice Time (s)",
                             half_of_time_window=10,
@@ -109,10 +136,10 @@ class Driver:
                             event_name,
                             eventraces,
                         ) in neuron_obj.get_categorized_dff_traces().items():
-                            """print(
+                            print(
                                 "Event traces name: ",
                                 eventraces.get_event_traces_name(),
-                            )"""
+                            )
                             if (
                                 "_Choice Time (s)" != eventraces.get_event_traces_name()
                                 and "_Start Time (s)"
@@ -127,28 +154,30 @@ class Driver:
                                 ]
 
                                 if bool(is_eventname_in_list_we_care_about) == True:
-                                    print(
+                                    """print(
                                         f"WE CARE ABOUT: {eventraces.get_event_traces_name()}"
-                                    )
+                                    )"""
                                     number_of_event_traces += 1
-                                    print(
-                                        "Event trace number: ", number_of_event_traces
-                                    )
+                                    """print(
+                                            "Event trace number: ",
+                                            number_of_event_traces,
+                                        )"""
                                     # print(eventraces.get_dff_traces_of_neuron())
                                     # but can it pull the abet data for every event trace?
                                     # print(eventraces.get_abet())
                                     """now I have abet and dff ready to go, now write
-                                    a function in EventTraces to make this processed table
-                                    for this neuron depending on the input parameters"""
+                                        a function in EventTraces to make this processed table
+                                        for this neuron depending on the input parameters"""
                                     # testing groupby
 
                                     eventraces.process_dff_traces_by()  # returns path of csv
                                     # avg_cell_eventrace(csv_path)
                                     # PLOT
                                 else:
-                                    print(
+                                    """print(
                                         f"WE DON'T CARE ABOUT: {eventraces.get_event_traces_name()}"
-                                    )
+                                    )"""
+                                    pass
                         print(
                             "Time taken for %s: %s" % (cell_name, time.time() - start)
                         )
@@ -161,13 +190,18 @@ class Driver:
         # Does it identify the ABET file for this session? yes
         # print(session_1.behavioral_df.head())
 
-    def main2():
-        """11/12/21 : editing it so it runs through all the sessions in a mouse and ignores the
+
+if __name__ == "__main__":
+    Driver.main()
+
+"""
+def main2():
+        11/12/21 : editing it so it runs through all the sessions in a mouse and ignores the
         sessions in which already have been processed
 
         Returns:
         dff traces for a given time window for each accepted cell for each session in each mouse, for a given PTP Inscopix folder
-        """
+        
 
         session_path = r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-5/Session-20210623-093122_BLA-Insc-5_PR_D2_NEW_SCOPE"
         session_1 = Session(session_path)
@@ -188,12 +222,7 @@ class Driver:
 
             # print(neuron_obj.get_sample_dff_times())
             # print(neuron_obj.get_dff_trace())
-            """            neuron_obj.add_aligned_dff_traces(
-                "Choice Time (s)",
-                half_of_time_window=10,
-                trial_type="Trial Type",
-                reward_size="Reward Size",
-            )"""
+
             neuron_obj.add_aligned_dff_traces(
                 "Choice Time (s)",
                 half_of_time_window=10,
@@ -227,9 +256,7 @@ class Driver:
                     # print(eventraces.get_dff_traces_of_neuron())
                     # but can it pull the abet data for every event trace?
                     # print(eventraces.get_abet())
-                    """now I have abet and dff ready to go, now write
-                    a function in EventTraces to make this processed table
-                    for this neuron depending on the input parameters"""
+                    
                     # testing groupby
                     eventraces.process_dff_traces_by()  # returns path of csv
                     # avg_cell_eventrace(csv_path)
@@ -239,7 +266,4 @@ class Driver:
 
         # Does it identify the ABET file for this session? yes
         # print(session_1.behavioral_df.head())
-
-
-if __name__ == "__main__":
-    Driver.main()
+"""

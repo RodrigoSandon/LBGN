@@ -103,7 +103,7 @@ def create_concat_csv(lst_of_all_avg_cell_csv_paths, root_path):
 
 
 def main():
-    MOUSE_BATCH_PATH = Path(r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3")
+    MOUSE_BATCH_PATH = Path(r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#4")
 
     session_types = [
         "PR D1",

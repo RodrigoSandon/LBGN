@@ -233,7 +233,7 @@ class EventTrace(Neuron):  # for one combo
     def stack_dff_traces_of_group(self, list_of_idxs, start_choice_collect):
         """This is for one grouping found from the groupby columns"""
         # print("Chosen time to extract: ", start_choice_collect)
-        print("list of idxs for group ", list_of_idxs)  # - works
+        # print("list of idxs for group ", list_of_idxs)  # - works
         list_of_lists = []
         # list of dff traces (which is a list), every list within list represents the event found
         for abet_idx in list_of_idxs:
@@ -297,9 +297,9 @@ class EventTrace(Neuron):  # for one combo
         ).tolist()
 
     def process_dff_traces_by(self):
-        print("Currently processing dff traces for all groups...")
+        # print("Currently processing dff traces for all groups...")
 
-        print("groupby list: ", self.groupby_list)
+        # print("groupby list: ", self.groupby_list)
 
         grouped_table = self.get_abet().groupby(self.groupby_list)
         # print("abet file: ", self.get_abet().head())
@@ -319,6 +319,7 @@ class EventTrace(Neuron):  # for one combo
         # SUBCOMBO PROCESSING
         for key, val in grouped_table.groups.items():
             # make sure to not include subcombos that have nans in it
+
             if "nan" not in str(key):
 
                 number_of_event_appearances = len(list(val))
@@ -341,10 +342,10 @@ class EventTrace(Neuron):  # for one combo
 
                 # Doing some editing on this df
                 group_df = Utilities.rename_all_col_names(group_df, x_axis)
-                print(
+                """print(
                     "Event %s has %s events omitted." % (str(key), self.events_omitted)
-                )
-                print("Dimensions of grouped df:", (group_df.shape))
+                )"""
+                # print("Dimensions of grouped df:", (group_df.shape))
                 group_df.insert(
                     loc=0,
                     column="Event #",

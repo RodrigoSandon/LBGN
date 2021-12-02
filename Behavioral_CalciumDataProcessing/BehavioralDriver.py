@@ -11,7 +11,7 @@ def get_session_name(path):
     return name
 
 
-def main(ROOT_MOUSE):
+def main(ROOT):
     """11/12/21 : going through entire mouse to check if there's an abet file that needs to be preprocessed."""
     """Give a list of the strings that have another string --> these ones don't include in analysis"""
     to_not_include_in_preprocessing = [
@@ -20,7 +20,7 @@ def main(ROOT_MOUSE):
         "resnet50",
     ]
 
-    for root, dirs, files in os.walk(ROOT_MOUSE, topdown=True):
+    for root, dirs, files in os.walk(ROOT, topdown=True):
         roots_not_included = []
         if root.find("Session") != -1:
             # only roots with "Session"
@@ -94,8 +94,8 @@ def main(ROOT_MOUSE):
                                 pass
 
 
-ROOT_MOUSE = r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3"
-main(ROOT_MOUSE)
+ROOT = r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#4"
+main(ROOT)
 
 
 def main2(curr_session):
