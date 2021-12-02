@@ -93,6 +93,15 @@ def main():
     truncate_csvs_in_root(
         ROOT_PATH, name_of_files_to_trunc="all_concat_cells.csv", len_threshold=200
     )
+    truncate_csvs_in_root(
+        ROOT_PATH, name_of_files_to_trunc="all_concat_cells.csv", len_threshold=200
+    )
+    truncate_csvs_in_root(
+        ROOT_PATH, name_of_files_to_trunc="all_concat_cells.csv", len_threshold=200
+    )
+    truncate_csvs_in_root(
+        ROOT_PATH, name_of_files_to_trunc="all_concat_cells.csv", len_threshold=200
+    )
 
 
 main()

@@ -135,7 +135,7 @@ def sort_cells(
     df_mod = pd.DataFrame.from_dict(
         sorted_cells_d
     )  # from_records automatically sorts by key smh
-
+    # print(df_mod)
     return df_mod
 
 
@@ -163,6 +163,8 @@ def heatmap(
 
         ax.set_ylabel("Neuron #")
         ax.set_xlabel("Time relative to choice (s)")
+
+        plt.title("Smoothed Z-Scores of Neural Ca2+ Traces (Ordered)")
         plt.savefig(out_path)
         plt.close()
 
@@ -181,7 +183,9 @@ def spaghetti_plot(df, file_path, out_path):
             # print("cell: ", cell)
             plt.plot(x, list(df[cell]), label=cell)
         number_cells = len(df.T)
-        plt.title("DF/F (n=%s)" % (number_cells))
+        plt.title("Smoothed Z-Scores of Neural Ca2+ Traces (n=%s)" % (number_cells))
+        plt.xlabel("Time (s)")
+        plt.ylabel("Z-Score")
         plt.locator_params(axis="x", nbins=20)
         plt.savefig(out_path)
         plt.close()
@@ -268,8 +272,17 @@ def change_cell_names(df):
 
 def scatter_plot(subdf, out_path):
     # Note: the time column has been made by now for this df
-    for col in df.columns:
-        subdf.plot(kind="scatter", x="Time (s)", y=col)
+    number_cells = len(list(subdf.columns))
+
+    # Skip time column
+    for col in subdf.columns:
+        # print(subdf[col].tolist())
+        plt.scatter(x=subdf.index.values.tolist(), y=subdf[col].tolist())
+
+    plt.title(f"Smoothed Z-Scores of Neural Ca2+ Traces (n={number_cells})")
+    plt.locator_params(axis="x", nbins=20)
+    plt.savefig(out_path)
+    plt.close()
 
 
 def subdf_of_df(
@@ -280,13 +293,17 @@ def subdf_of_df(
         cell_name : [subwindow of dff traces]
     }
     """
+    # note time index has been created?
     subdf_d = {}
     for col in df.columns:
+        # print("SUBWINDOW")
         subdf_d[col] = create_subwindow_for_col(
             df, col, unknown_time_min, unknown_time_max, reference_pair, hertz
         )
+        # print(subdf_d[col])
     subdf = pd.DataFrame.from_dict(subdf_d)
-
+    # print("here")
+    # print(subdf.head())
     return subdf
 
 
@@ -296,12 +313,13 @@ def create_subwindow_for_col(
     idx_start, idx_end = convert_secs_to_idx(
         unknown_time_min, unknown_time_max, reference_pair, hertz
     )
+    # print(idx_start, idx_end)
     subwindow = df[col][idx_start:idx_end]
-
+    # print(subwindow)
     return subwindow
 
 
-def insert_time_index_to_df(df):
+def insert_time_index_to_df(df) -> pd.DataFrame:
     x_axis = np.arange(-10, 10, 0.1).tolist()
     # end shoudl be 10.1 and not 10 bc upper limit is exclusive
 
@@ -313,8 +331,13 @@ def insert_time_index_to_df(df):
     x_axis[middle_idx] = 0
     x_axis = [round(i, 1) for i in x_axis]
 
+    """try:"""  # to see if there are any additional droppings to do
     df.insert(0, "Time (s)", x_axis)
     df = df.set_index("Time (s)")
+    """except ValueError:
+        df = df.drop(df.tail(1).index)
+        df.insert(0, "Time (s)", x_axis)
+        df = df.set_index("Time (s)")"""
 
     return df
 
@@ -350,7 +373,7 @@ def main():
 
             df = gaussian_smooth(df.T)
             df = df.T
-
+            # print(df.head())
             # We're essentially gettin the mean of z-score for a time frame to sort
             df_sorted = sort_cells(
                 df,
@@ -359,10 +382,11 @@ def main():
                 reference_pair={0: 100},
                 hertz=10,
             )
-
+            # print(df.head())
             df_sorted = insert_time_index_to_df(df_sorted)
 
             # Create scatter plot here
+            # print(df_sorted.head())
 
             heatmap(
                 df_sorted,
@@ -424,32 +448,6 @@ def process_one_table():
 
     # print("AFTER SORTING:")
     # print(df_sorted.head())
-
-    df_sorted = insert_time_index_to_df(df_sorted)
-    # print("AFTER INDEX CHANGE:")
-    # print(df_sorted.head())
-
-    heatmap(
-        df_sorted,
-        csv_path,
-        out_path=csv_path.replace(".csv", "_sorted_hm_baseline-10_-1_gauss1.5.png"),
-        vmin=-2.5,
-        vmax=2.5,
-        xticklabels=20,
-    )
-
-    spaghetti_plot(
-        df_sorted,
-        csv_path,
-        out_path=csv_path.replace(
-            ".csv", "_sorted_spaghetti_baseline-10_-1_gauss1.5.png"
-        ),
-    )
-
-    # Create scatter plot of subwindows of each cell's window of specific event
-    # First create sub df -> bc we don't want to cluster based on the 200 data points only
-    # by 30 data points
-
     subdf = subdf_of_df(
         df_sorted,
         unknown_time_min=0.0,
@@ -458,7 +456,44 @@ def process_one_table():
         hertz=10,
     )
 
+    # MAKE SURE NEW IDX IS LAST BEFORE PLOTS, MESSES UP PREVIOUS PREPROCESSING
+    df_sorted_new_idx = insert_time_index_to_df(df_sorted)
+    """print("AFTER INDEX CHANGE:")
+    print(df_sorted.head())"""
+
+    heatmap(
+        df_sorted_new_idx,
+        csv_path,
+        out_path=csv_path.replace(".csv", "_sorted_hm_baseline-10_-1_gauss1.5.png"),
+        vmin=-2.5,
+        vmax=2.5,
+        xticklabels=20,
+    )
+
+    spaghetti_plot(
+        df_sorted_new_idx,
+        csv_path,
+        out_path=csv_path.replace(
+            ".csv", "_sorted_spaghetti_baseline-10_-1_gauss1.5.png"
+        ),
+    )
+
+    # Create SCATTER PLOT of subwindows of each cell's window of specific event
+    # First create sub df -> bc we don't want to cluster based on the 200 data points only
+    # by 30 data points
+
+    # this scatter plot is plotting smoothed z-score of each cell's dff
+
+    # print(subdf.head())
+
+    scatter_plot(
+        subdf,
+        out_path=csv_path.replace(
+            ".csv", "_scatter_window0_3s_baseline-10_-1_gauss1.5.png"
+        ),
+    )
+
 
 if __name__ == "__main__":
-    # main()
-    process_one_table()
+    main()
+    # process_one_table()

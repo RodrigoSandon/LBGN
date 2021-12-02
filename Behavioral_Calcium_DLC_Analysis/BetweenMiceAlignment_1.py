@@ -7,10 +7,10 @@ import os.path as path
 import pandas as pd
 
 
-def find_csv_files(session_path, endswith):
+def find_csv_files(session_path, startswith):
 
     files = glob.glob(
-        os.path.join(session_path, "**", "*%s") % (endswith),
+        os.path.join(session_path, "**", "%s*") % (startswith),
         recursive=True,
     )
 
@@ -19,6 +19,9 @@ def find_csv_files(session_path, endswith):
 
 # example 11/24/21: /media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1/BLA-Insc-1/Late Shock D1/BetweenCellAlignmentData/Block_Choice Time (s)/1.0/concat_cells.csv
 # /media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-7/RDT D1/BetweenCellAlignmentData/Block_Omission_Choice Time (s)/(3.0, 'ITI')/concat_cells.csv
+# /media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#4/BLA-Insc-11/RDT D1/BetweenCellAlignmentData/Block_Choice Time (s)/1.0/concat_cells.csv
+
+
 def concat_all_cells_across_similar_sessions(
     lst_of_all_avg_concat_cells_path, root_path
 ):
