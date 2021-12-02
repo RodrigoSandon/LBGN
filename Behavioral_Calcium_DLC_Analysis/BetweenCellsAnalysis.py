@@ -331,13 +331,25 @@ def insert_time_index_to_df(df) -> pd.DataFrame:
     x_axis[middle_idx] = 0
     x_axis = [round(i, 1) for i in x_axis]
 
-    """try:"""  # to see if there are any additional droppings to do
     df.insert(0, "Time (s)", x_axis)
     df = df.set_index("Time (s)")
-    """except ValueError:
-        df = df.drop(df.tail(1).index)
-        df.insert(0, "Time (s)", x_axis)
-        df = df.set_index("Time (s)")"""
+
+    return df
+
+
+def truncate_past_len_threshold(df, len_threshold):
+
+    if len(df) > len_threshold:
+        print(df.head())
+        print(f"Truncating {len(df)} to {len_threshold}")
+        diff = len_threshold - len(df)
+        new_df = df[0 : len(df) - diff - 1]
+        print(f"-> final len = {len(new_df)}")
+        return new_df
+
+    elif len(df) < len_threshold:
+        print("File less than threshold!")
+        return "skip"
 
     return df
 
@@ -354,12 +366,15 @@ def main():
         ROOT_PATH, to_look_for_originally, to_look_for_conditional
     )
     # print(csv_list)
+    csv_list.reverse()
     for count, csv_path in enumerate(csv_list):
 
         print(f"Working on file {count}: {csv_path}")
 
         try:
             df = pd.read_csv(csv_path)
+            df = truncate_past_len_threshold(df, len_threshold=200)
+            # if df != "skip"
 
             df = change_cell_names(df)
 
@@ -414,6 +429,7 @@ def main():
 def process_one_table():
     csv_path = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
     df = pd.read_csv(csv_path)
+    df = truncate_past_len_threshold(df, len_threshold=200)
 
     df = change_cell_names(df)
     # print("AFTER NAME CHANGE:")
