@@ -1,12 +1,13 @@
-import os, glob
+import os
+import glob
 import pandas as pd
 import numpy as np
 
 
-def find_csv_files(root_path, endswith):
+def find_csv_files(root_path, startswith):
 
     files = glob.glob(
-        os.path.join(root_path, "**", "*%s") % (endswith),
+        os.path.join(root_path, "**", "%s*") % (startswith),
         recursive=True,
     )
 
@@ -16,22 +17,23 @@ def find_csv_files(root_path, endswith):
 def truncate_csvs_in_root(root_path, name_of_files_to_trunc, len_threshold):
 
     files_to_truncate = find_csv_files(root_path, name_of_files_to_trunc)
+    # finds csv paths to process
 
     df_database = TableDatabase()
 
     for file in files_to_truncate:
-        table = Table(file, len_threshold)
+        table = Table(file, len_threshold)  # make a table object
+        # include table into the database (without dropping rows yet)
         table.include_table(drop_row=False)
 
-    print(f"Number of jagged tables before: {df_database._number_of_jagged_dfs}")
-
-    df_database._number_of_jagged_dfs = 0
-    df_database._jagged_dfs = []
+    print(
+        f"Number of jagged tables before: {df_database._number_of_jagged_dfs}")
 
     for file in files_to_truncate:
         table = Table(file, len_threshold)
         table.include_table(drop_row=True)
-    print(f"Number of jagged tables after: {df_database._number_of_jagged_dfs}")
+    print(
+        f"Number of jagged tables after: {df_database._number_of_jagged_dfs}")
 
 
 class TableDatabase(object):
@@ -39,7 +41,6 @@ class TableDatabase(object):
     its parameters that are is is meta of tables."""
 
     _number_of_jagged_dfs = 0
-    _jagged_dfs = []
 
 
 class Table(TableDatabase):
@@ -65,12 +66,14 @@ class Table(TableDatabase):
     def include_table(self, drop_row: bool):
         equals_threshold = self.check_if_df_len_equals_thres()
         if drop_row == True:  # indicates whether we want to acc drop rows yet
-            if equals_threshold is True:  # don't do anything if the df is not jagged
-                pass
+            if equals_threshold is True:  # if the df is not jagged, still check if it needs to be truncated
+
+                self.truncate_past_len_threshold()
             elif equals_threshold is False:  # if it is jagged, do everything
+                print(
+                    f"File {self.path} is jagged.")
                 self.drop_last_row_df()
-                TableDatabase._number_of_jagged_dfs += 1
-                TableDatabase._jagged_dfs.append(self.path)
+                TableDatabase._number_of_jagged_dfs -= 1
                 self.save_table()
 
         elif drop_row == False:
@@ -80,15 +83,26 @@ class Table(TableDatabase):
                 equals_threshold is False
             ):  # if it is jagged, do everything except dropping
                 TableDatabase._number_of_jagged_dfs += 1
-                TableDatabase._jagged_dfs.append(self.path)
 
     def save_table(self):
         new_path = self.path.replace(".csv", "_truncated.csv")
         self.df.to_csv(new_path, index=False)
 
+    def truncate_past_len_threshold(self):
+
+        if len(self.df) > self.len_threshold:
+            print(
+                f"File {self.path} is not jagged, but higher than threshold: {len(self.df)}")
+            # minus 1 bc we refer to index
+            self.df = self.df.truncate(after=self.len_threshold - 1)
+            self.save_table()
+        elif len(self.df) < self.len_threshold:
+            print(f"File {self.path} less than threshold: {len(self.df)}")
+
 
 def main():
     ROOT_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData"
+    #ROOT_PATH = r"/Users/rodrigosandon/Documents/GitHub/LBGN/SampleData/truncating_bug"
 
     truncate_csvs_in_root(
         ROOT_PATH, name_of_files_to_trunc="all_concat_cells.csv", len_threshold=200

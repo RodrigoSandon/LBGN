@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import glob, os
+import glob
+import os
 from typing import List, Optional
 from numpy.core.fromnumeric import mean
 import pandas as pd
@@ -183,7 +184,8 @@ def spaghetti_plot(df, file_path, out_path):
             # print("cell: ", cell)
             plt.plot(x, list(df[cell]), label=cell)
         number_cells = len(df.T)
-        plt.title("Smoothed Z-Scores of Neural Ca2+ Traces (n=%s)" % (number_cells))
+        plt.title("Smoothed Z-Scores of Neural Ca2+ Traces (n=%s)" %
+                  (number_cells))
         plt.xlabel("Time (s)")
         plt.ylabel("Z-Score")
         plt.locator_params(axis="x", nbins=20)
@@ -337,26 +339,10 @@ def insert_time_index_to_df(df) -> pd.DataFrame:
     return df
 
 
-def truncate_past_len_threshold(df, len_threshold):
-
-    if len(df) > len_threshold:
-        print(df.head())
-        print(f"Truncating {len(df)} to {len_threshold}")
-        diff = len_threshold - len(df)
-        new_df = df[0 : len(df) - diff - 1]
-        print(f"-> final len = {len(new_df)}")
-        return new_df
-
-    elif len(df) < len_threshold:
-        print("File less than threshold!")
-        return "skip"
-
-    return df
-
-
 def main():
 
     ROOT_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData"
+    #ROOT_PATH = r"/Users/rodrigosandon/Documents/GitHub/LBGN/SampleData/truncating_bug"
 
     to_look_for_originally = "all_concat_cells.csv"
     # would only look for this is the file causing the conditional statement didn't exist
@@ -373,8 +359,7 @@ def main():
 
         try:
             df = pd.read_csv(csv_path)
-            df = truncate_past_len_threshold(df, len_threshold=200)
-            # if df != "skip"
+            # df = truncate_past_len_threshold(df, len_threshold=200)
 
             df = change_cell_names(df)
 
@@ -429,7 +414,7 @@ def main():
 def process_one_table():
     csv_path = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
     df = pd.read_csv(csv_path)
-    df = truncate_past_len_threshold(df, len_threshold=200)
+    #df = truncate_past_len_threshold(df, len_threshold=200)
 
     df = change_cell_names(df)
     # print("AFTER NAME CHANGE:")
@@ -480,7 +465,8 @@ def process_one_table():
     heatmap(
         df_sorted_new_idx,
         csv_path,
-        out_path=csv_path.replace(".csv", "_sorted_hm_baseline-10_-1_gauss1.5.png"),
+        out_path=csv_path.replace(
+            ".csv", "_sorted_hm_baseline-10_-1_gauss1.5.png"),
         vmin=-2.5,
         vmax=2.5,
         xticklabels=20,

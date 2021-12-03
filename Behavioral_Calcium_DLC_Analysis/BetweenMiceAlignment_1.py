@@ -1,7 +1,9 @@
 from typing import List
 from pathlib import Path
 import pprint
-import re, os, glob
+import re
+import os
+import glob
 import json
 import os.path as path
 import pandas as pd
@@ -104,7 +106,8 @@ def concat_all_cells_across_similar_sessions(
                     avg_dff_traces_df = pd.read_csv(avg_concat_cells_csv_path)
                     for col_name, col_data in avg_dff_traces_df.iteritems():
                         avg_dff_traces_df = avg_dff_traces_df.rename(
-                            columns={col_name: "_".join([mouse_name, col_name])}
+                            columns={col_name: "_".join(
+                                [mouse_name, col_name])}
                         )
                     for col_name, col_data in avg_dff_traces_df.iteritems():
                         cell_name = col_name
@@ -118,7 +121,8 @@ def concat_all_cells_across_similar_sessions(
                     avg_dff_traces_df = pd.read_csv(avg_concat_cells_csv_path)
                     for col_name, col_data in avg_dff_traces_df.iteritems():
                         avg_dff_traces_df = avg_dff_traces_df.rename(
-                            columns={col_name: "_".join([mouse_name, col_name])}
+                            columns={col_name: "_".join(
+                                [mouse_name, col_name])}
                         )
                     for col_name, col_data in avg_dff_traces_df.iteritems():
                         cell_name = col_name
@@ -150,7 +154,8 @@ def concat_all_cells_across_similar_sessions(
                         dict([(k, pd.Series(v)) for k, v in d.items()])
                     )
 
-                new_path = os.path.join(root_path, session_type, combo, subcombo)
+                new_path = os.path.join(
+                    root_path, session_type, combo, subcombo)
                 os.makedirs(new_path, exist_ok=True)
                 concatenated_cells_df.to_csv(
                     os.path.join(new_path, "all_concat_cells.csv"), index=False
