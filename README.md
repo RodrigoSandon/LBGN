@@ -27,8 +27,7 @@ Please make sure to update tests as appropriate.
 ### License
 [MIT](https://choosealicense.com/licenses/mit/)
 
-# Subproject: Aligning Big Brains & Atlases (ABBA)
-
-# MISC
-### Merging Video Files
+# Subprojects: 
+Aligning Big Brains & Atlases (ABBA), 
+Merging Video Files
 
