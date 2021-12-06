@@ -34,7 +34,7 @@ class Session(object):
         # First create Neuron objects for each cell column
         d = self.get_dff_traces().to_dict("list")
         # don't need to remove time anymore
-        print("dict keys: ", d.keys())
+        # print("dict keys: ", d.keys())
         """
         Example:
         d = {
@@ -284,9 +284,11 @@ class EventTrace(Neuron):  # for one combo
         return list_of_lists  # this is a 2d list - SCOPE OF THIS WAS INNER
 
     def trim_grouped_df(self, grouped_df):
-        """Drops any column that contains at least one NaN"""
-        omit_nan_df = grouped_df.dropna(axis="columns")
-        return omit_nan_df
+        """Drops any columns that are past the half_the_time_window *10*2 - 1"""
+        trunc_df = grouped_df.truncate(
+            after=(self.half_of_time_window * 10 * 2 - 1), axis=1
+        )
+        return trunc_df
 
     def get_xaxis_list_for_plotting(self):
         """Hertz of frames is 10 Hz, so increment by 0.1 within this time window.
@@ -335,11 +337,13 @@ class EventTrace(Neuron):  # for one combo
                 # ??????Necessary???
 
                 # converting that 2d list of lists into df
+
                 group_df = pd.DataFrame.from_records(
                     self.alleventracesforacombo_eventcomboname_dict[key]
                 )
-                group_df = self.trim_grouped_df(group_df)
 
+                group_df = self.trim_grouped_df(group_df)
+                # print(group_df.head())
                 # Doing some editing on this df
                 group_df = Utilities.rename_all_col_names(group_df, x_axis)
                 """print(
