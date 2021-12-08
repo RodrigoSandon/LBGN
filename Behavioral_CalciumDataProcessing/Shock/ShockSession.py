@@ -15,8 +15,9 @@ class ShockSession:
 
         df = df[df.Evnt_Time != 0]
         print("After filtering for housekeeping trial: ", len(df))
+        # print(df.head())
 
-        is_new_trial = df.Item_Name == "Shock_Counter"
+        is_new_trial = df.Item_Name == "Pulse Shock"
         df["is_new_trial"] = is_new_trial  # new column whether it is a new trial or not
         df["is_new_trial"].value_counts()
         print(f"Number of trials in shock session:")
