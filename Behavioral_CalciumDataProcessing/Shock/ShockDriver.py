@@ -21,27 +21,6 @@ def main():
 
     ROOT = r"/media/rory/Padlock_DT/BLA_Analysis"
 
-    session_name_options = [
-        "PR D1",
-        "PR D2",
-        "Pre-RDT RM",
-        "RDT D1",
-        "RDT D2",
-        "RDT D3",
-        "Post-RDT D1",
-        "Post-RDT D2",
-        "Post-RDT D3",
-        "RM D1",
-        "RM D2",
-        "RM D3",
-        "RM D8",
-        "RM D9",
-        "RM D10",
-        "Shock Test",
-        "Late Shock D1",
-        "Late Shock D2",
-    ]
-
     to_not_include_in_preprocessing = [
         "_ABET_processed.csv",
         "_ABET_GPIO_processed.csv",

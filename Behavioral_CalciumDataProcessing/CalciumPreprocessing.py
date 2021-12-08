@@ -662,5 +662,5 @@ def run_per_mouse():
 
 if __name__ == "__main__":
 
-    main()
-    # run_per_mouse()
+    # main()
+    run_per_mouse()

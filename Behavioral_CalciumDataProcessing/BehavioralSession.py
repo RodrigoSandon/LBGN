@@ -3,8 +3,7 @@ import numpy as np
 
 
 class BehavioralSession:
-    def __init__(self, name, raw_csv_path):
-        self.name = name
+    def __init__(self, raw_csv_path):
         self.raw_csv_path = raw_csv_path
         self.preprocessed_csv = None
 
