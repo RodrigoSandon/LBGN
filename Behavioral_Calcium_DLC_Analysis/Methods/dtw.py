@@ -40,9 +40,10 @@ def dp(dist_mat):
     for i in range(N):
         for j in range(M):
             penalty = [
-                cost_mat[i, j],      # match (0)
+                cost_mat[i, j],  # match (0)
                 cost_mat[i, j + 1],  # insertion (1)
-                cost_mat[i + 1, j]]  # deletion (2)
+                cost_mat[i + 1, j],
+            ]  # deletion (2)
             i_penalty = np.argmin(penalty)
             cost_mat[i + 1, j + 1] = dist_mat[i, j] + penalty[i_penalty]
             traceback_mat[i, j] = i_penalty
@@ -189,7 +190,7 @@ def fill_points_for_hm(df):
 
 def main():
 
-    CONCAT_CELLS_PATH = r"//Users/rodrigosandon/Documents/GitHub/LBGN/SampleData/truncating_bug/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
+    CONCAT_CELLS_PATH = r"/home/rory/Rodrigo/SampleData/truncating_bug/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
     start = time.time()
 
     print(f"Currently working on ... {CONCAT_CELLS_PATH}")
@@ -197,7 +198,7 @@ def main():
 
     df = change_cell_names(df)
 
-    #df = df.reindex(index=df.index[::-1])
+    # df = df.reindex(index=df.index[::-1])
 
     df = custom_standardize(
         df,
@@ -218,9 +219,12 @@ def main():
 
     # SETUP SKELETON DATAFRAME
     col_number = len(list(df.columns))
-    cell_hm = pd.DataFrame(data=np.zeros((col_number, col_number)), index=list(
-        df.columns), columns=list(df.columns))
-    #print("Skeleton df: ")
+    cell_hm = pd.DataFrame(
+        data=np.zeros((col_number, col_number)),
+        index=list(df.columns),
+        columns=list(df.columns),
+    )
+    # print("Skeleton df: ")
     # print(cell_hm)
 
     for count, combo in enumerate(combos):
@@ -243,7 +247,7 @@ def main():
         path, cost_mat = dp(dist_mat)
 
         alignment_cost = cost_mat[N - 1, M - 1]
-        norm_alignment_cost = cost_mat[N - 1, M - 1]/(N + M)
+        norm_alignment_cost = cost_mat[N - 1, M - 1] / (N + M)
 
         """
         Overlaps: comparing cell 4 w/ cell 5 and cell 5 w/ cell 4 -> already covered by combo func
@@ -257,7 +261,7 @@ def main():
         # <- tthe closer the is to zero, the more similar
         cell_hm.loc[cell_x, cell_y] = norm_alignment_cost
 
-        #print("Alignment cost: {:.4f}".format(alignment_cost))
+        # print("Alignment cost: {:.4f}".format(alignment_cost))
         print("Normalized alignment cost: {:.4f}".format(norm_alignment_cost))
 
     cell_hm = fill_points_for_hm(cell_hm)
@@ -265,12 +269,10 @@ def main():
     heatmap(
         cell_hm,
         CONCAT_CELLS_PATH,
-        out_path=CONCAT_CELLS_PATH.replace(
-            ".csv", "_sim_map_final.png"
-        ),
-        vmin=.5,
+        out_path=CONCAT_CELLS_PATH.replace(".csv", "_sim_map_final.png"),
+        vmin=0.5,
         vmax=0,
-        xticklabels=1,
+        xticklabels=2,
     )
 
     end = time.time()
