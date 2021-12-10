@@ -49,7 +49,7 @@ for i = 1:length(processed)
             caTraceTrials = NaN(size(eTS,1),numMeasurements);                   %initialize trial x time calcium trace matrix
             %%
             for t = 1:(size(eTS,1))                                             %for each trial
-                %% set each trial's temporal boundaries
+                %% set each trials temporal boundaries
                 timeWin = [eTS(t)+uv.evtWin(1,1):uv.dt:eTS(t)+uv.evtWin(1,2)];  %calculate time window around each event
                 if min(timeWin) > min(ca.time) & max(timeWin) < max(ca.time)    %if the beginning and end of the time window around the event occurred during the recording period. if not, the time window is out of range
                     %% get unit event counts in trials

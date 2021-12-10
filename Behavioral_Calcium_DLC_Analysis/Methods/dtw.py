@@ -270,7 +270,7 @@ def main():
         ),
         vmin=.5,
         vmax=0,
-        xticklabels=1,
+        xticklabels=2,
     )
 
     end = time.time()
