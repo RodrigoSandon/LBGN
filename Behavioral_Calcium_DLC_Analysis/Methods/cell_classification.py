@@ -281,9 +281,13 @@ class CellClassification(Utilities):
         number_cells = 0
 
         for col in list(self.df.columns):
+            print(col)
             number_cells += 1
             rand_data_lst = [i for i in list(self.df[col])]
-            random.shuffle(rand_data_lst)  # randomize the list
+            count = 0
+            while count != 1000:
+                count += 1
+                random.shuffle(rand_data_lst)  # randomize the list
 
             sub_df_rand_lst = Utilities.create_subwindow_of_list(rand_data_lst,
                                                                  self.lower_bound_time,
@@ -309,6 +313,8 @@ class CellClassification(Utilities):
             #print(f"rand mean: {rand_mean}")
 
             #stdev = math.sqrt((mean - rand_mean)**2/number_cells)
+            #take amean of shuffled
+            #multiply
 
             if abs(stdev - rand_stdev) >= 1:
                 active_cells.append(col)
@@ -324,7 +330,7 @@ class CellClassification(Utilities):
             self.standardize, self.smooth)
 
         Utilities.pie_chart(self.csv_path, f"Sigma Difference Shuffled vs Unshuffled (n={number_cells})", list(
-            d.values()), list(d.keys()), replace_name=f"{replace_name_prefix}_pie_shuffled.png")
+            d.values()), list(d.keys()), replace_name=f"{replace_name_prefix}_pie_1000shuffled.png")
 
     def two_sample_t_test(self):  # two sample t test
         """
@@ -444,7 +450,7 @@ class CellClassification(Utilities):
         """
         Nonparametric technique --> data does not assume a distribution
         Under the hypothesis that two samples should be sig. equal in mean, but H1 being 0-3s is greater/less.
-        Takes a baseline subwindow (0-10s) to extract mean from.
+        Takes a baseline subwindow (-10 to 0s) to extract mean from.
         Takes the after event time (0-2s) as input.
 
         - More robust model
@@ -529,7 +535,7 @@ Facts:
                        upper_bound_time=2,
                        reference_pair={0: 100},
                        hertz=10,
-                       test="two sample t test")
+                       test="stdev binary test")
 
 
 if __name__ == "__main__":
