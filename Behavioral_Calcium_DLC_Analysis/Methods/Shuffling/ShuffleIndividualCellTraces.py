@@ -1,6 +1,8 @@
+from pathlib import Path
 from typing import List
 import pandas as pd
 import numpy as np
+import random
 import glob
 import os
 
@@ -35,16 +37,33 @@ def main():
             For every cell:
                 For every event category:
                     For every event type:
+                        df_avg_of_shuffled_event_iterations = {
+                            "iter 1" = [...],
+                            .
+                            .
+                            .
+                        }
+                        # will look like this:
+                            +---------+----------+----------+----------+----------+
+                            | Iteration # | -10      | -9.9     | -9.8     | -9.7     |...
+                            +---------+----------+----------+----------+----------+
+                            | 1           | 1.25548  | 2.172035 | 3.490741 | 3.742469 |...
+                            +---------+----------+----------+----------+----------+
+                            .
+                            .
+                            .
+                            +---------+----------+----------+----------+----------+
+                            | 1000        | 4.770984 | 4.456681 | 5.656993 | 4.127113 |...
+                            +---------+----------+----------+----------+----------+
                         For every row (event) in plot_ready.csv:
-                            For 1000 times:
-                                Shuffle the row of this event
+                            Shuffle the row of this event
 
-                        avg_for_cell = { cell_name : []}
-                        For every column series (dff traces for all events under that time point):
-                            avg_for_cell[cell_name].append(avg of column series)
+                        avg_for_iter = []
+                        avg_for_iter.append(avg of all rows)
 
-                        avg_for_cell to DataFrame
-                        avg_for_cell to csv
+                        #now have 1*200 list, because all the events have been averaged to time point (200 time points)
+
+                    # Now have big 1000 X 200 table of averages for iterations
 
     Run BetweenCellAlignment.py to get the concatenated traces of cells for each event type (will look for
     the avg shuffled traces of each cell for every event (avg_plot_ready.csv:
@@ -112,18 +131,55 @@ def main():
                 Utilities.pie_chart(self.csv_path, f"Sigma Difference Shuffled vs Unshuffled (n={number_cells})", list(
                     d.values()), list(d.keys()), replace_name=f"{replace_name_prefix}_pie_1000shuffled.png")
 
-
-
-
-
-
-
-
-
     """
+    session_types = [
+        "PR D1",
+        "PR D2",
+        "Pre-RDT RM",
+        "RDT D1",
+        "RDT D2",
+        "RDT D3",
+        "Post-RDT D1",
+        "Post-RDT D2",
+        "Post-RDT D3",
+        "RM D1",
+        "RM D2",
+        "RM D3",
+        "RM D8",
+        "RM D9",
+        "RM D10",
+        "Shock Test",
+        "Late Shock D1",
+        "Late Shock D2",
+    ]
+    # /media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-6/RDT D2 NEW_SCOPE/SingleCellAlignmentData/C01/Shock Ocurred_Choice Time (s)/True/plot_ready.csv
+
+    MASTER_ROOT = r"/media/rory/Padlock_DT/BLA_Analysis/"
+    all_plot_ready_csvs = find_paths_startswith(MASTER_ROOT, "plot_ready.csv")
+
+    for path in all_plot_ready_csvs:
+        df_plot_ready = pd.read_csv(path)
+
+        df_avg_of_shuffled_iterations = {}
+
+        df_plot_ready = df_plot_ready.T  # Now events are cols and rows are time point
+
+        for event in list(df_plot_ready.columns):
+            print(df_plot_ready[event])
+            random.shuffle(df_plot_ready[event])
+            print(
+                df_plot_ready[event]
+            )  # <- make sure you are not including the Event name in the mix of shuffling
+            # Avoid this by not including the first row into the shuffle
+            break
+
+        break
 
     CONCAT_CELLS_PATH = r"/Users/rodrigosandon/Documents/GitHub/LBGN/SampleData/truncating_bug/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
 
     CONCAT_CELLS_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Block_Choice Time (s)/3.0/all_concat_cells.csv"
 
     SINGLE_CELL_EVENTS_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1/BLA-Insc-2/Post-RDT D2/SingleCellAlignmentData/C01/Block_Choice Time (s)/1.0/plot_ready.csv"
+
+
+main()
