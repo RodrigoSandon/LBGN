@@ -1,7 +1,10 @@
 from pathlib import Path
-from typing import List
+from typing import List, Optional
+import matplotlib.pyplot as plt
+from scipy import stats
 import pandas as pd
 import numpy as np
+import time
 import random
 import glob
 import os
@@ -17,8 +20,103 @@ def find_paths_startswith(root_path, startswith) -> List:
     return files
 
 
-def main():
-    """
+def remove_occurences_under_cond(paths_list: list, **kwargs):
+
+    must_contain = []
+    for groupby_key, value in kwargs.items():
+        must_contain.append(value)
+
+    for path in paths_list:
+        pass
+
+
+def avg_df_cols(
+    df: pd.DataFrame, include_first_col: bool, iter_num: Optional[int] = None
+) -> list:
+    if include_first_col == False:
+        df = df.iloc[:, 1:]  # to exclude the first column, which is event #
+
+    avg_of_cols = []
+    # Iterates through columns, finding means, and appending to an array
+    for col_name, col_data in df.iteritems():
+        avg_dff_of_timewindow_of_event = df[col_name].mean()
+        avg_of_cols.append(avg_dff_of_timewindow_of_event)
+
+    # print(f"Average for iter {iter_num}: {avg_of_cols}")
+    return avg_of_cols
+
+
+def plot_trace(csv_path: str, out_path: str):
+    df = pd.read_csv(csv_path)
+
+    xaxis = list(df.index.tolist())
+    plt.plot(xaxis, list(df[df.columns[0]]))
+    plt.title(("Average DF/F Trace for %s's Event Window") % (df.columns[0]))
+    plt.xlabel("Time (s)")
+    plt.ylabel("Average DF/F of All Events")
+    plt.savefig(out_path)
+    plt.close()
+
+
+def coeff_variation(lst_of_nums: list):
+    return stats.variation(lst_of_nums)
+
+
+def acquire_avg_shuffled_eventraces_for_cell(
+    csv_path: str, shuffle_iters: int, new_csv_name: str
+):
+
+    print(f"Working on: {csv_path}")
+    start = time.time()
+    # start_1 = time.time()
+    df_plot_ready = pd.read_csv(csv_path)
+    # end_2 = time.time()
+    # print(f"Time to load_csv: {end_2 - start_1}")
+
+    df_avg_of_shuffled_iterations = {}
+    num_iters = 0
+
+    while num_iters < shuffle_iters:
+        num_iters += 1
+        # print(num_iters)
+
+        # a copy of df is needed
+        deep_copy = df_plot_ready.copy(deep=True)
+        deep_copy = deep_copy.T
+        # Now events are cols and rows are time point
+
+        for event in list(deep_copy.columns):  # goes through all columns
+            random.shuffle(
+                deep_copy[event][1:]
+            )  # <- make sure you are not including the Event name in the mix of shuffling
+            # Avoid this by not including the first row into the shuffle
+        deep_copy = deep_copy.T
+        # take the average of all these shuffled events
+        avg_of_events_for_iter = avg_df_cols(deep_copy, include_first_col=False)
+        df_avg_of_shuffled_iterations[f"Iter {num_iters}"] = avg_of_events_for_iter
+
+    # Now have big 1000 X 200, average this out
+    big_df = pd.DataFrame.from_dict(df_avg_of_shuffled_iterations)
+    big_df = big_df.T
+    # print(big_df.head())
+    # print(big_df.columns)
+    avg_iters = avg_df_cols(big_df, include_first_col=True)
+    # calculate coefficeint of variation here
+    coeff_var = coeff_variation(avg_iters)
+    print(f"Coefficient of variation is {coeff_var} for {shuffle_iters} iterations.")
+    # Save the df
+    # /media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-7/Pre-RDT RM/SingleCellAlignmentData/C01/Block_Choice Time (s)/1.0/plot_ready.csv
+    cell_name = csv_path.split("/")[9]
+    df = pd.DataFrame(avg_iters, columns=[cell_name])
+    out_path = csv_path.replace("plot_ready.csv", new_csv_name)
+    df.to_csv(out_path, index=False)
+
+    end = time.time()
+    print(f"Time taken for {csv_path}: {(end - start)/60} min")
+
+
+def description():
+    string = """
     Functionalities:
     1) Returns list of all plot ready csv file paths, example:
 
@@ -132,54 +230,66 @@ def main():
                     d.values()), list(d.keys()), replace_name=f"{replace_name_prefix}_pie_1000shuffled.png")
 
     """
-    session_types = [
-        "PR D1",
-        "PR D2",
-        "Pre-RDT RM",
-        "RDT D1",
-        "RDT D2",
-        "RDT D3",
-        "Post-RDT D1",
-        "Post-RDT D2",
-        "Post-RDT D3",
-        "RM D1",
-        "RM D2",
-        "RM D3",
-        "RM D8",
-        "RM D9",
-        "RM D10",
-        "Shock Test",
-        "Late Shock D1",
-        "Late Shock D2",
-    ]
+
+    return string
+
+
+def do_everything():
     # /media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-6/RDT D2 NEW_SCOPE/SingleCellAlignmentData/C01/Shock Ocurred_Choice Time (s)/True/plot_ready.csv
 
     MASTER_ROOT = r"/media/rory/Padlock_DT/BLA_Analysis/"
     all_plot_ready_csvs = find_paths_startswith(MASTER_ROOT, "plot_ready.csv")
+    max_iters = 1000
 
     for path in all_plot_ready_csvs:
-        df_plot_ready = pd.read_csv(path)
-
-        df_avg_of_shuffled_iterations = {}
-
-        df_plot_ready = df_plot_ready.T  # Now events are cols and rows are time point
-
-        for event in list(df_plot_ready.columns):
-            print(df_plot_ready[event])
-            random.shuffle(df_plot_ready[event])
-            print(
-                df_plot_ready[event]
-            )  # <- make sure you are not including the Event name in the mix of shuffling
-            # Avoid this by not including the first row into the shuffle
-            break
-
-        break
-
-    CONCAT_CELLS_PATH = r"/Users/rodrigosandon/Documents/GitHub/LBGN/SampleData/truncating_bug/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
-
-    CONCAT_CELLS_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Block_Choice Time (s)/3.0/all_concat_cells.csv"
-
-    SINGLE_CELL_EVENTS_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1/BLA-Insc-2/Post-RDT D2/SingleCellAlignmentData/C01/Block_Choice Time (s)/1.0/plot_ready.csv"
+        acquire_avg_shuffled_eventraces_for_cell(
+            path,
+            shuffle_iters=max_iters,
+            new_csv_name=f"shuf{max_iters}_avg_plot_ready.csv",
+        )
 
 
-main()
+def do_one_csv():
+    csv_path = r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1/BLA-Insc-1/Late Shock D1/SingleCellAlignmentData/C01/Block_Choice Time (s)/1.0/plot_ready.csv"
+    max_iters = 100
+    name_of_file = csv_path.split("/")[-1]
+    new_name = f"shuf{max_iters}_avg_plot_ready.csv"
+    new_path = csv_path.replace(name_of_file, new_name)
+
+    acquire_avg_shuffled_eventraces_for_cell(
+        csv_path,
+        shuffle_iters=max_iters,
+        new_csv_name=f"shuf{max_iters}_avg_plot_ready.csv",
+    )
+    plot_trace(new_path, out_path=new_path.replace(".csv", ".png"))
+
+
+def shuffle_comparison():
+    csv_path = r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1/BLA-Insc-1/Late Shock D1/SingleCellAlignmentData/C01/Block_Choice Time (s)/1.0/plot_ready.csv"
+    tests = 0
+
+    while tests < 5:
+        tests += 1
+        print(f"TEST {tests}")
+
+        acquire_avg_shuffled_eventraces_for_cell(
+            csv_path,
+            shuffle_iters=1000,
+            new_csv_name=f"shuf{1000}_avg_plot_ready.csv",
+        )
+        acquire_avg_shuffled_eventraces_for_cell(
+            csv_path,
+            shuffle_iters=100,
+            new_csv_name=f"shuf{100}_avg_plot_ready.csv",
+        )
+
+        acquire_avg_shuffled_eventraces_for_cell(
+            csv_path,
+            shuffle_iters=10,
+            new_csv_name=f"shuf{10}_avg_plot_ready.csv",
+        )
+
+
+# do_everything()
+# do_one_csv()
+shuffle_comparison()
