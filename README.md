@@ -4,7 +4,7 @@ Supervisors: Dr. Patrick Piantadosi and Dr. Andrew Holmes
 # TODO Streams
 1) Make slides of progress - to present to Andrew
 2) Relational Database (SQL/Datajoint) - start tinkering/ setting it up
-3) Including Shock Test Sessions into database
+3) Including Shock Test Sessions into database --> Will everything still run smoothly with shock abet files?
 4) BORIS Matlab to BORIS python for approach abort data
 5) Similarity map (DTW/Pearson corr) --> Decoders --> Interpretation Models
 6) Statistical Classification --> (1) Wilcoxon rank-sum, (2) Sean's shuffling, (3) One-sample, Two-sample t-test
