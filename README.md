@@ -7,7 +7,7 @@ Supervisors: Dr. Patrick Piantadosi and Dr. Andrew Holmes
 3) Including Shock Test Sessions into database
 4) BORIS Matlab to BORIS python for approach abort data
 5) Similarity map (DTW/Pearson corr) --> Decoders --> Interpretation Models
-6) Statistical Classification --> (1) Wilcoxon, (2) Sean's shuffling, (3) One-sample, Two-sample t-test
+6) Statistical Classification --> (1) Wilcoxon rank-sum, (2) Sean's shuffling, (3) One-sample, Two-sample t-test
 7) Including DLC --> how is movement alone impacting our analyses?
 8) Include Progressive Ratio Sessions into database
 
