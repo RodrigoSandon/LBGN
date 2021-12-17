@@ -9,6 +9,94 @@ import random
 import glob
 import os
 
+from scipy.ndimage.filters import gaussian_filter1d
+
+from scipy.stats.stats import tmean
+
+
+class Utilities:
+    def change_cell_names(df):
+
+        for col in df.columns:
+
+            df = df.rename(columns={col: col.replace("BLA-Insc-", "")})
+            # print(col)
+
+        return df
+
+    def zscore(obs_value, mu, sigma):
+        return (obs_value - mu) / sigma
+
+    def convert_secs_to_idx(
+        unknown_time_min, unknown_time_max, reference_pair: dict, hertz: int
+    ):
+        reference_time = list(reference_pair.keys())[0]  # has to come from 0
+        reference_idx = list(reference_pair.values())[0]
+
+        idx_start = (unknown_time_min * hertz) + reference_idx
+
+        idx_end = (unknown_time_max * hertz) + reference_idx  # exclusive
+        return int(idx_start), int(idx_end)
+
+    def create_subwindow_for_col(
+        df, col, unknown_time_min, unknown_time_max, reference_pair, hertz
+    ) -> list:
+        idx_start, idx_end = Utilities.convert_secs_to_idx(
+            unknown_time_min, unknown_time_max, reference_pair, hertz
+        )
+        subwindow = df[col][idx_start:idx_end]
+        return subwindow
+
+    def create_subwindow_of_list(
+        lst, unknown_time_min, unknown_time_max, reference_pair, hertz
+    ) -> list:
+        idx_start, idx_end = Utilities.convert_secs_to_idx(
+            unknown_time_min, unknown_time_max, reference_pair, hertz
+        )
+
+        subwindow_lst = lst[idx_start:idx_end]
+        return subwindow_lst
+
+    def zscore(obs_value, mu, sigma):
+        return (obs_value - mu) / sigma
+
+    def custom_standardize(
+        df, unknown_time_min, unknown_time_max, reference_pair: dict, hertz: int
+    ):
+        for col in df.columns:
+            subwindow = Utilities.create_subwindow_for_col(
+                df, col, unknown_time_min, unknown_time_max, reference_pair, hertz
+            )
+            mean_for_cell = stats.tmean(subwindow)
+            stdev_for_cell = stats.tstd(subwindow)
+
+            new_col_vals = []
+            for ele in list(df[col]):
+                z_value = Utilities.zscore(ele, mean_for_cell, stdev_for_cell)
+                new_col_vals.append(z_value)
+
+            df[col] = new_col_vals
+        return df
+
+    def gaussian_smooth(df, sigma: float = 1.5):
+        # so that it applys smoothing within a cell and not across cells
+        df = df.T.apply(gaussian_filter1d, sigma=sigma, axis=0)
+        # switch back to og transformation
+        return df.T
+
+    def pie_chart(
+        csv_path: str, test_name: str, data: list, labels: list, replace_name: str
+    ):
+        fig = plt.figure(figsize=(10, 7))
+        plt.pie(data, labels=labels, autopct="%1.2f%%")
+        plt.title(test_name)
+        new_name = csv_path.replace(".csv", replace_name)
+        plt.savefig(new_name)
+        plt.close()
+
+    def make_replace_name_suffix_prefix(standardize: bool, smooth: bool):
+        return f"_norm-{standardize}_smooth-{smooth}"
+
 
 def find_paths_startswith(root_path, startswith) -> List:
 
@@ -20,14 +108,20 @@ def find_paths_startswith(root_path, startswith) -> List:
     return files
 
 
-def remove_occurences_under_cond(paths_list: list, **kwargs):
+def extract_certain_paths(paths_list: list, **kwargs) -> list:
+    kept_paths = []
 
     must_contain = []
     for groupby_key, value in kwargs.items():
         must_contain.append(value)
 
     for path in paths_list:
-        pass
+        if all(sub_str in path for sub_str in must_contain):
+            # indicates that this path must contain all the parameters specified
+            print(f"Identified: {path}")
+            kept_paths.append(path)
+
+    return kept_paths
 
 
 def avg_df_cols(
@@ -112,7 +206,82 @@ def acquire_avg_shuffled_eventraces_for_cell(
     df.to_csv(out_path, index=False)
 
     end = time.time()
-    print(f"Time taken for {csv_path}: {(end - start)/60} min")
+    print(f"Time taken for {csv_path}: {(end - start)} s")
+
+
+def create_concat_of_certain_shuf_cells(csvs: list, max_iters: int, dest_path: str):
+    # /media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1/BLA-Insc-3/RDT D2/SingleCellAlignmentData/C01/Shock Ocurred_Choice Time (s)/True/shuf1000_avg_plot_ready.csv
+    concat_cells = {}
+
+    for csv in csvs:
+        mouse = csv.split("/")[6]
+        cell_name = csv.split("/")[9]
+        col_name = mouse + "_" + cell_name
+
+        df = pd.read_csv(csv)
+
+        concat_cells[col_name] = df[cell_name].tolist()
+
+    all_cells_df = pd.DataFrame.from_dict(concat_cells)
+    out_path = os.path.join(dest_path, f"all_concat_cells_shuf{max_iters}.csv")
+    all_cells_df.to_csv(out_path, index=False)
+
+
+def shuf_all_concat_cells_comparison(
+    og_concat_path: str,
+    shuf_concat_path: str,
+    SD_difference: int,
+    max_iters: int,
+    plot_out_path: str,
+):
+    og_df = pd.read_csv(og_concat_path)
+    shuf_df = pd.read_csv(shuf_concat_path)
+
+    posActive = []
+    negActive = []
+    neutral = []
+
+    num_cells = 0
+    for col in list(
+        shuf_df.columns
+    ):  # both dfs should have the same col names, ordered the same
+        num_cells += 1
+        shuf_mean = stats.tmean(shuf_df[col].tolist())
+        shuf_sd = stats.tstd(shuf_df[col].tolist())
+
+        upperSD = shuf_mean + (SD_difference * shuf_sd)
+        lowerSD = shuf_mean - (SD_difference * shuf_sd)
+
+        sub_df_og = Utilities.create_subwindow_of_list(
+            og_df[col].tolist(),
+            unknown_time_min=0,
+            unknown_time_max=2,
+            reference_pair={0: 100},
+            hertz=10,
+        )  # now aquiring unshuffled all concat cells
+
+        og_mean = stats.tmean(
+            sub_df_og
+        )  # <- need to open unshuffled all_concat_cells.csv for this
+
+        if og_mean > upperSD:
+            posActive.append(col)
+        elif og_mean < lowerSD:
+            negActive.append(col)
+        else:
+            neutral.append(col)
+    d = {
+        "+ Active Cells": len(posActive),
+        "- Active Cells": len(negActive),
+        "Neutral Cells": len(neutral),
+    }
+
+    # saves pie plot to a given path
+    fig = plt.figure(figsize=(10, 7))
+    plt.pie(list(d.values()), labels=list(d.keys()), autopct="%1.2f%%")
+    plt.title(f"Shuffled {max_iters} vs Unshuffled (n={num_cells})")
+    plt.savefig(plot_out_path)
+    plt.close()
 
 
 def description():
@@ -251,7 +420,7 @@ def do_everything():
 
 def do_one_csv():
     csv_path = r"/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1/BLA-Insc-1/Late Shock D1/SingleCellAlignmentData/C01/Block_Choice Time (s)/1.0/plot_ready.csv"
-    max_iters = 100
+    max_iters = 1000
     name_of_file = csv_path.split("/")[-1]
     new_name = f"shuf{max_iters}_avg_plot_ready.csv"
     new_path = csv_path.replace(name_of_file, new_name)
@@ -262,6 +431,41 @@ def do_one_csv():
         new_csv_name=f"shuf{max_iters}_avg_plot_ready.csv",
     )
     plot_trace(new_path, out_path=new_path.replace(".csv", ".png"))
+
+
+def do_certain_csvs():
+
+    MASTER_ROOT = r"/media/rory/Padlock_DT/BLA_Analysis/"
+    all_plot_ready_csvs = find_paths_startswith(MASTER_ROOT, "plot_ready.csv")
+    certain_paths = extract_certain_paths(
+        all_plot_ready_csvs,
+        session_type="RDT D2",
+        event="Shock Ocurred_Choice Time (s)/True",
+    )
+
+    max_iters = 1000
+
+    for csv_path in certain_paths:
+        acquire_avg_shuffled_eventraces_for_cell(
+            csv_path,
+            shuffle_iters=max_iters,
+            new_csv_name=f"shuf{max_iters}_avg_plot_ready.csv",
+        )
+
+
+def create_concat_cells():
+    MASTER_ROOT = r"/media/rory/Padlock_DT/BLA_Analysis/"
+    max_iters = 1000
+    csvs = find_paths_startswith(MASTER_ROOT, f"shuf{max_iters}_avg_plot_ready.csv")
+    # only performing this on certain cells that match under certain parameters
+    certain_paths = extract_certain_paths(
+        csvs,
+        session_type="RDT D2",
+        event="Shock Ocurred_Choice Time (s)/True",
+    )
+
+    destination_path = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True"
+    create_concat_of_certain_shuf_cells(certain_paths, max_iters, destination_path)
 
 
 def shuffle_comparison():
@@ -290,6 +494,22 @@ def shuffle_comparison():
         )
 
 
+def analyze_event_type():
+    DIR = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True"
+    max_iters = 1000
+    SD_difference = 1
+
+    og_concat_cells = os.path.join(DIR, "all_concat_cells.csv")
+    shuf_concat_cells = os.path.join(DIR, f"all_concat_cells_shuf{max_iters}.csv")
+    plt_path = f"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/pie_shuf{max_iters}vs_unshuf.png"
+
+    shuf_all_concat_cells_comparison(
+        og_concat_cells, shuf_concat_cells, SD_difference, max_iters, plt_path
+    )
+
+
 # do_everything()
 # do_one_csv()
-shuffle_comparison()
+# shuffle_comparison()
+create_concat_cells()
+analyze_event_type()

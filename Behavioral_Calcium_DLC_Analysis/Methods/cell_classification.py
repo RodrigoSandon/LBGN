@@ -51,19 +51,17 @@ class Cell:
             return False
 
     def make_arr_of_focus(self):
-        reference_time = list(self.reference_pair.keys())[
-            0]  # has to come from 0
+        reference_time = list(self.reference_pair.keys())[0]  # has to come from 0
         reference_idx = list(self.reference_pair.values())[0]
 
         idx_start = (self.unknown_time_min * self.hertz) + reference_idx
         # idx_end = (self.unknown_time_max * self.hertz) + reference_idx + 1 ? 11/30/21
         idx_end = (self.unknown_time_max * self.hertz) + reference_idx
 
-        return self.dff_traces[int(idx_start): int(idx_end)]
+        return self.dff_traces[int(idx_start) : int(idx_end)]
 
 
 class Utilities:
-
     def change_cell_names(df):
 
         for col in df.columns:
@@ -133,29 +131,33 @@ class Utilities:
         # switch back to og transformation
         return df.T
 
-    def pie_chart(csv_path: str, test_name: str, data: list, labels: list, replace_name: str):
+    def pie_chart(
+        csv_path: str, test_name: str, data: list, labels: list, replace_name: str
+    ):
         fig = plt.figure(figsize=(10, 7))
-        plt.pie(data, labels=labels, autopct='%1.2f%%')
+        plt.pie(data, labels=labels, autopct="%1.2f%%")
         plt.title(test_name)
         new_name = csv_path.replace(".csv", replace_name)
         plt.savefig(new_name)
+        plt.close()
 
     def make_replace_name_suffix_prefix(standardize: bool, smooth: bool):
         return f"_norm-{standardize}_smooth-{smooth}"
 
 
 class CellClassification(Utilities):
-
-    def __init__(self,
-                 csv_path: str,
-                 df: pd.DataFrame,
-                 standardize: bool,
-                 smooth: bool,
-                 lower_bound_time: int,
-                 upper_bound_time: int,
-                 reference_pair: dict,
-                 hertz: int,
-                 test: str):
+    def __init__(
+        self,
+        csv_path: str,
+        df: pd.DataFrame,
+        standardize: bool,
+        smooth: bool,
+        lower_bound_time: int,
+        upper_bound_time: int,
+        reference_pair: dict,
+        hertz: int,
+        test: str,
+    ):
 
         super().__init__()
 
@@ -173,13 +175,15 @@ class CellClassification(Utilities):
 
         if standardize == True and smooth == True:  # major
             self.df = Utilities.custom_standardize(
-                df, lower_bound_time, upper_bound_time, reference_pair, hertz)
+                df, lower_bound_time, upper_bound_time, reference_pair, hertz
+            )
             self.df = Utilities.gaussian_smooth(self.df)
         elif standardize == False and smooth == False:  # major
             self.df = df
         elif standardize == True and smooth == False:
             self.df = Utilities.custom_standardize(
-                df, lower_bound_time, upper_bound_time, reference_pair, hertz)
+                df, lower_bound_time, upper_bound_time, reference_pair, hertz
+            )
         elif standardize == False and smooth == True:
             self.df = Utilities.gaussian_smooth(df)
 
@@ -212,7 +216,7 @@ class CellClassification(Utilities):
         Find abs difference of these two stdevs and if equal to or above 1, inactive/active.
         If below 1, neutral cell.
 
-        Caveats: 
+        Caveats:
             1) Finding significance via difference of variability of data with 1 sigma of difference being significant - not standard?
 
         """
@@ -224,29 +228,32 @@ class CellClassification(Utilities):
             number_cells += 1
             mean_of_entire_cell = stats.tmean(list(self.df[col]))
 
-            sub_df_baseline_lst = Utilities.create_subwindow_of_list(list(self.df[col]),
-                                                                     unknown_time_min=-10,
-                                                                     unknown_time_max=0,
-                                                                     reference_pair={
-                                                                         0: 100},
-                                                                     hertz=10)
-            #print(f"Shuffled data: {sub_df_rand_lst}")
+            sub_df_baseline_lst = Utilities.create_subwindow_of_list(
+                list(self.df[col]),
+                unknown_time_min=-10,
+                unknown_time_max=0,
+                reference_pair={0: 100},
+                hertz=10,
+            )
+            # print(f"Shuffled data: {sub_df_rand_lst}")
 
             base_mean = stats.tmean(sub_df_baseline_lst)
             base_stdev = stats.tstd(sub_df_baseline_lst)
 
-            sub_df_lst = Utilities.create_subwindow_of_list(list(self.df[col]),
-                                                            self.lower_bound_time,
-                                                            self.upper_bound_time,
-                                                            self.reference_pair,
-                                                            self.hertz)
-            #print(f"Normal data: {sub_df_lst}")
+            sub_df_lst = Utilities.create_subwindow_of_list(
+                list(self.df[col]),
+                self.lower_bound_time,
+                self.upper_bound_time,
+                self.reference_pair,
+                self.hertz,
+            )
+            # print(f"Normal data: {sub_df_lst}")
 
             mean = stats.tmean(sub_df_lst)
             stdev = stats.tstd(sub_df_lst)
 
-            #print(f"baseline mean for {col}: {base_mean}")
-            #print(f"mean for {col}: {mean}")
+            # print(f"baseline mean for {col}: {base_mean}")
+            # print(f"mean for {col}: {mean}")
 
             if abs(stdev - base_stdev) >= 1:
                 active_cells.append(col)
@@ -255,13 +262,19 @@ class CellClassification(Utilities):
 
         d = {
             "Non-Neutral Cells": len(active_cells),
-            "Neutral Cells": len(inactive_cells)
+            "Neutral Cells": len(inactive_cells),
         }
         replace_name_prefix = Utilities.make_replace_name_suffix_prefix(
-            self.standardize, self.smooth)
+            self.standardize, self.smooth
+        )
 
-        Utilities.pie_chart(self.csv_path, f"Sigma Difference Post-Choice vs Baseline (n={number_cells})", list(
-            d.values()), list(d.keys()), replace_name=f"{replace_name_prefix}_pie.png")
+        Utilities.pie_chart(
+            self.csv_path,
+            f"Sigma Difference Post-Choice vs Baseline (n={number_cells})",
+            list(d.values()),
+            list(d.keys()),
+            replace_name=f"{replace_name_prefix}_pie.png",
+        )
 
     def stdev_difference_test_shuffled(self):  # stdev binary test
         """
@@ -272,7 +285,7 @@ class CellClassification(Utilities):
         Finds differences of stdev, if abs(stdev difference) is equal to or above 1, its non-neutral cell, else,
         it's a neutral cell.
 
-        Caveat: 
+        Caveat:
             1) Finding significance via difference of variability of data with 1 sigma of difference being significant - not standard?
             2) Result will vary from test to test.
         """
@@ -289,32 +302,36 @@ class CellClassification(Utilities):
                 count += 1
                 random.shuffle(rand_data_lst)  # randomize the list
 
-            sub_df_rand_lst = Utilities.create_subwindow_of_list(rand_data_lst,
-                                                                 self.lower_bound_time,
-                                                                 self.upper_bound_time,
-                                                                 self.reference_pair,
-                                                                 self.hertz)
-            #print(f"Shuffled data: {sub_df_rand_lst}")
+            sub_df_rand_lst = Utilities.create_subwindow_of_list(
+                rand_data_lst,
+                self.lower_bound_time,
+                self.upper_bound_time,
+                self.reference_pair,
+                self.hertz,
+            )
+            # print(f"Shuffled data: {sub_df_rand_lst}")
 
             rand_mean = stats.tmean(sub_df_rand_lst)
             rand_stdev = stats.tstd(sub_df_rand_lst)
 
-            sub_df_lst = Utilities.create_subwindow_of_list(list(self.df[col]),
-                                                            self.lower_bound_time,
-                                                            self.upper_bound_time,
-                                                            self.reference_pair,
-                                                            self.hertz)
-            #print(f"Normal data: {sub_df_lst}")
+            sub_df_lst = Utilities.create_subwindow_of_list(
+                list(self.df[col]),
+                self.lower_bound_time,
+                self.upper_bound_time,
+                self.reference_pair,
+                self.hertz,
+            )
+            # print(f"Normal data: {sub_df_lst}")
 
             mean = stats.tmean(sub_df_lst)
             stdev = stats.tstd(sub_df_lst)
 
-            #print(f"normal mean: {mean}")
-            #print(f"rand mean: {rand_mean}")
+            # print(f"normal mean: {mean}")
+            # print(f"rand mean: {rand_mean}")
 
-            #stdev = math.sqrt((mean - rand_mean)**2/number_cells)
-            #take amean of shuffled
-            #multiply
+            # stdev = math.sqrt((mean - rand_mean)**2/number_cells)
+            # take amean of shuffled
+            # multiply
 
             if abs(stdev - rand_stdev) >= 1:
                 active_cells.append(col)
@@ -323,14 +340,20 @@ class CellClassification(Utilities):
 
         d = {
             "Non-Neutral Cells": len(active_cells),
-            "Neutral Cells": len(inactive_cells)
+            "Neutral Cells": len(inactive_cells),
         }
 
         replace_name_prefix = Utilities.make_replace_name_suffix_prefix(
-            self.standardize, self.smooth)
+            self.standardize, self.smooth
+        )
 
-        Utilities.pie_chart(self.csv_path, f"Sigma Difference Shuffled vs Unshuffled (n={number_cells})", list(
-            d.values()), list(d.keys()), replace_name=f"{replace_name_prefix}_pie_1000shuffled.png")
+        Utilities.pie_chart(
+            self.csv_path,
+            f"Sigma Difference Shuffled vs Unshuffled (n={number_cells})",
+            list(d.values()),
+            list(d.keys()),
+            replace_name=f"{replace_name_prefix}_pie_1000shuffled.png",
+        )
 
     def two_sample_t_test(self):  # two sample t test
         """
@@ -349,41 +372,48 @@ class CellClassification(Utilities):
             number_cells += 1
             mean_of_entire_cell = stats.tmean(list(self.df[col]))
 
-            sub_df_baseline_lst = Utilities.create_subwindow_of_list(list(self.df[col]),
-                                                                     unknown_time_min=-10,
-                                                                     unknown_time_max=0,
-                                                                     reference_pair={
-                                                                         0: 100},
-                                                                     hertz=10)
+            sub_df_baseline_lst = Utilities.create_subwindow_of_list(
+                list(self.df[col]),
+                unknown_time_min=-10,
+                unknown_time_max=0,
+                reference_pair={0: 100},
+                hertz=10,
+            )
 
             base_mean = stats.tmean(sub_df_baseline_lst)
             base_stdev = stats.tstd(sub_df_baseline_lst)
 
-            sub_df_lst = Utilities.create_subwindow_of_list(list(self.df[col]),
-                                                            unknown_time_min=0,
-                                                            unknown_time_max=3,
-                                                            reference_pair={
-                                                                0: 100},
-                                                            hertz=10)
+            sub_df_lst = Utilities.create_subwindow_of_list(
+                list(self.df[col]),
+                unknown_time_min=0,
+                unknown_time_max=3,
+                reference_pair={0: 100},
+                hertz=10,
+            )
 
-            result = stats.ttest_1samp(
-                sub_df_lst, base_mean, alternative="two-sided")
+            result = stats.ttest_1samp(sub_df_lst, base_mean, alternative="two-sided")
 
-            if result.pvalue < (0.01/number_cells):  # 0.005 * 2 = 0.01
+            if result.pvalue < (0.01 / number_cells):  # 0.005 * 2 = 0.01
                 active_cells.append(col)
-            elif result.pvalue >= (0.01/number_cells):
+            elif result.pvalue >= (0.01 / number_cells):
                 inactive_cells.append(col)
 
         d = {
             "Non-Neutral Cells": len(active_cells),
-            "Neutral Cells": len(inactive_cells)
+            "Neutral Cells": len(inactive_cells),
         }
 
         replace_name_prefix = Utilities.make_replace_name_suffix_prefix(
-            self.standardize, self.smooth)
+            self.standardize, self.smooth
+        )
 
-        Utilities.pie_chart(self.csv_path, f"Two-Sample T-test (n={number_cells})", list(
-            d.values()), list(d.keys()), replace_name=f"{replace_name_prefix}_pie_bonferroni_two-sample_ttest.png")
+        Utilities.pie_chart(
+            self.csv_path,
+            f"Two-Sample T-test (n={number_cells})",
+            list(d.values()),
+            list(d.keys()),
+            replace_name=f"{replace_name_prefix}_pie_bonferroni_two-sample_ttest.png",
+        )
 
     def one_sample_t_test(self):  # one sample t test
         """
@@ -404,32 +434,34 @@ class CellClassification(Utilities):
             number_cells += 1
             mean_of_entire_cell = stats.tmean(list(self.df[col]))
 
-            sub_df_baseline_lst = Utilities.create_subwindow_of_list(list(self.df[col]),
-                                                                     unknown_time_min=-10,
-                                                                     unknown_time_max=0,
-                                                                     reference_pair={
-                                                                         0: 100},
-                                                                     hertz=10)
+            sub_df_baseline_lst = Utilities.create_subwindow_of_list(
+                list(self.df[col]),
+                unknown_time_min=-10,
+                unknown_time_max=0,
+                reference_pair={0: 100},
+                hertz=10,
+            )
 
             base_mean = stats.tmean(sub_df_baseline_lst)
             base_stdev = stats.tstd(sub_df_baseline_lst)
 
-            sub_df_lst = Utilities.create_subwindow_of_list(list(self.df[col]),
-                                                            unknown_time_min=0,
-                                                            unknown_time_max=3,
-                                                            reference_pair={
-                                                                0: 100},
-                                                            hertz=10)
+            sub_df_lst = Utilities.create_subwindow_of_list(
+                list(self.df[col]),
+                unknown_time_min=0,
+                unknown_time_max=3,
+                reference_pair={0: 100},
+                hertz=10,
+            )
 
             result_greater = stats.ttest_1samp(
-                sub_df_lst, base_mean, alternative="greater")
+                sub_df_lst, base_mean, alternative="greater"
+            )
 
-            result_less = stats.ttest_1samp(
-                sub_df_lst, base_mean, alternative="less")
+            result_less = stats.ttest_1samp(sub_df_lst, base_mean, alternative="less")
 
-            if result_greater.pvalue < (0.01/number_cells):  # 0.005 * 2 = 0.01
+            if result_greater.pvalue < (0.01 / number_cells):  # 0.005 * 2 = 0.01
                 active_cells.append(col)
-            elif result_less.pvalue < (0.01/number_cells):
+            elif result_less.pvalue < (0.01 / number_cells):
                 inactive_cells.append(col)
             else:
                 neutral_cells.append(col)
@@ -437,14 +469,20 @@ class CellClassification(Utilities):
         d = {
             "(+) Active Cells": len(active_cells),
             "(-) Active Cells": len(inactive_cells),
-            "Neutral Cells": len(neutral_cells)
+            "Neutral Cells": len(neutral_cells),
         }
 
         replace_name_prefix = Utilities.make_replace_name_suffix_prefix(
-            self.standardize, self.smooth)
+            self.standardize, self.smooth
+        )
 
-        Utilities.pie_chart(self.csv_path, f"One-Sample T-test (n={number_cells})", list(
-            d.values()), list(d.keys()), replace_name=f"{replace_name_prefix}_pie_bonferroni_one-sample_ttest.png")
+        Utilities.pie_chart(
+            self.csv_path,
+            f"One-Sample T-test (n={number_cells})",
+            list(d.values()),
+            list(d.keys()),
+            replace_name=f"{replace_name_prefix}_pie_bonferroni_one-sample_ttest.png",
+        )
 
     def wilcoxon_rank_sum(self):  # wilcoxon rank sum test
         """
@@ -454,7 +492,7 @@ class CellClassification(Utilities):
         Takes the after event time (0-2s) as input.
 
         - More robust model
-        - Ranks data points and takes probability that the sum of ranks (observed distribution) for a group is less/greater than that of the 
+        - Ranks data points and takes probability that the sum of ranks (observed distribution) for a group is less/greater than that of the
         Wilcoxon disttribution if the H1 is greater/less than Wilcoxon distribution.
 
         Could also compared shuffled vs unshuffled for the same time window.
@@ -467,29 +505,33 @@ class CellClassification(Utilities):
         for col in list(self.df.columns):
             number_cells += 1
 
-            sub_df_baseline_lst = Utilities.create_subwindow_of_list(list(self.df[col]),
-                                                                     unknown_time_min=-10,
-                                                                     unknown_time_max=0,
-                                                                     reference_pair={
-                                                                         0: 100},
-                                                                     hertz=10)
+            sub_df_baseline_lst = Utilities.create_subwindow_of_list(
+                list(self.df[col]),
+                unknown_time_min=-10,
+                unknown_time_max=0,
+                reference_pair={0: 100},
+                hertz=10,
+            )
 
-            sub_df_lst = Utilities.create_subwindow_of_list(list(self.df[col]),
-                                                            unknown_time_min=0,
-                                                            unknown_time_max=2,
-                                                            reference_pair={
-                                                                0: 100},
-                                                            hertz=10)
+            sub_df_lst = Utilities.create_subwindow_of_list(
+                list(self.df[col]),
+                unknown_time_min=0,
+                unknown_time_max=2,
+                reference_pair={0: 100},
+                hertz=10,
+            )
 
             result_greater = stats.ranksums(
-                sub_df_lst, sub_df_baseline_lst, alternative="greater")
+                sub_df_lst, sub_df_baseline_lst, alternative="greater"
+            )
 
             result_less = stats.ranksums(
-                sub_df_lst, sub_df_baseline_lst, alternative="less")
+                sub_df_lst, sub_df_baseline_lst, alternative="less"
+            )
 
-            if result_greater.pvalue < (0.01/number_cells):  # 0.005 * 2 = 0.01
+            if result_greater.pvalue < (0.01 / number_cells):  # 0.005 * 2 = 0.01
                 active_cells.append(col)
-            elif result_less.pvalue < (0.01/number_cells):
+            elif result_less.pvalue < (0.01 / number_cells):
                 inactive_cells.append(col)
             else:
                 neutral_cells.append(col)
@@ -497,29 +539,35 @@ class CellClassification(Utilities):
         d = {
             "(+) Active Cells": len(active_cells),
             "(-) Active Cells": len(inactive_cells),
-            "Neutral Cells": len(neutral_cells)
+            "Neutral Cells": len(neutral_cells),
         }
 
         replace_name_prefix = Utilities.make_replace_name_suffix_prefix(
-            self.standardize, self.smooth)
+            self.standardize, self.smooth
+        )
 
-        Utilities.pie_chart(self.csv_path, f"Wilcoxon Rank Sum Test (n={number_cells})", list(
-            d.values()), list(d.keys()), replace_name=f"{replace_name_prefix}_0-2s_-10-0s_bonferroni_pie_wilcoxon_rank_sum.png")
+        Utilities.pie_chart(
+            self.csv_path,
+            f"Wilcoxon Rank Sum Test (n={number_cells})",
+            list(d.values()),
+            list(d.keys()),
+            replace_name=f"{replace_name_prefix}_0-2s_-10-0s_bonferroni_pie_wilcoxon_rank_sum.png",
+        )
 
 
 def main():
     """
-Notes:
-    F-test
-        1) F test was cosidered to compare variance (similar to variability via stdev), we can say the 
-            population is norm distributed: N >= 30 --> this can be met
-        2) Samples need to be taken at random (one sample is, but another is sequentially chosen)
-        3) The samples are independent (random sample not affected by a sequential one)
-        http://www2.psychology.uiowa.edu/faculty/mordkoff/GradStats/part%201/I.07%20normal.pdf
+    Notes:
+        F-test
+            1) F test was cosidered to compare variance (similar to variability via stdev), we can say the
+                population is norm distributed: N >= 30 --> this can be met
+            2) Samples need to be taken at random (one sample is, but another is sequentially chosen)
+            3) The samples are independent (random sample not affected by a sequential one)
+            http://www2.psychology.uiowa.edu/faculty/mordkoff/GradStats/part%201/I.07%20normal.pdf
 
-Facts:
-    SD vs Variance
-     1. The SD is usually more useful to describe the variability of the data while the variance is usually much more useful mathematically.
+    Facts:
+        SD vs Variance
+         1. The SD is usually more useful to describe the variability of the data while the variance is usually much more useful mathematically.
 
     """
 
@@ -527,15 +575,17 @@ Facts:
     df = pd.read_csv(CONCAT_CELLS_PATH)
     df = Utilities.change_cell_names(df)
 
-    CellClassification(CONCAT_CELLS_PATH,
-                       df,
-                       standardize=False,
-                       smooth=False,
-                       lower_bound_time=0,
-                       upper_bound_time=2,
-                       reference_pair={0: 100},
-                       hertz=10,
-                       test="stdev binary test")
+    CellClassification(
+        CONCAT_CELLS_PATH,
+        df,
+        standardize=False,
+        smooth=False,
+        lower_bound_time=0,
+        upper_bound_time=2,
+        reference_pair={0: 100},
+        hertz=10,
+        test="stdev binary test",
+    )
 
 
 if __name__ == "__main__":

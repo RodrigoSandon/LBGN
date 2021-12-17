@@ -35,7 +35,7 @@ def create_concat_csv(lst_of_all_avg_cell_csv_paths, root_path):
     {
     combo: { 
         subcombo: {
-            cell_number: [avg dff traces for cell] (n = ~50,000)
+            cell_number: [avg dff traces for cell] (n = 200) -->Time window of 20s (-10 to 10s)
             }
         },
     }
