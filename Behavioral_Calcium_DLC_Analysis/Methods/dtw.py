@@ -190,7 +190,7 @@ def fill_points_for_hm(df):
 
 def main():
 
-    CONCAT_CELLS_PATH = r"/home/rory/Rodrigo/SampleData/truncating_bug/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
+    CONCAT_CELLS_PATH = r"/Users/rodrigosandon/Documents/GitHub/LBGN/SampleData/all_concat_cells.csv"
     start = time.time()
 
     print(f"Currently working on ... {CONCAT_CELLS_PATH}")
@@ -265,6 +265,9 @@ def main():
         print("Normalized alignment cost: {:.4f}".format(norm_alignment_cost))
 
     cell_hm = fill_points_for_hm(cell_hm)
+
+    cell_hm.to_csv(
+        "/Users/rodrigosandon/Documents/GitHub/LBGN/SampleData/sim_map_all_concat_cells.csv", index=False)
 
     heatmap(
         cell_hm,
