@@ -185,6 +185,7 @@ class CalciumPreprocessing:
             return df
 
         # ex: /media/rory/PTP Inscopix 2/PTP_Inscopix_#3/BLA-Insc-6/Session-20210518-102215_BLA-Insc-6_RDT_D1/2021-05-18-10-26-03_video_BLA-Insc-6_RDT_D1/cnmfe_cellset.isxd
+        # ex 12/22/21: /media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3/BLA-Insc-6/RM D9/2021-05-14-10-14-17_video_BLA-Insc-6_RM_D9/cnmfe_cellset.isxd
         def modify_local_cellset_index_col(df, root_list_of_cnmfe_cellsets):
             def get_session_name(
                 session_idx_in_mouse_folder, root_list_of_cnmfe_cellsets
@@ -195,7 +196,8 @@ class CalciumPreprocessing:
                     # print(i) good
                     if i == session_idx_in_mouse_folder:  # if the indices are the same
                         # print(root_list_of_cnmfe_cellsets[i].split("/")[6])
-                        return root_list_of_cnmfe_cellsets[i].split("/")[6]
+                        return root_list_of_cnmfe_cellsets[i].split("/")[7]
+                        # Changed where to find session name for long reg results 12/22/21
                         # get that session name based on idx
 
             # change the values of all the rows
@@ -332,7 +334,7 @@ def main():
 
     # Needs to be left like this because where the raw files are can change
     MASTER_PATH = r"/media/rory/Padlock_DT/BLA_Analysis"
-    MASTER_RAW_PATH = r"/media/rory/Nathen's Fantom/Inscopix_to_Analyze"  # Change ideally, so that you won't have to repeat calcium preprocessing
+    MASTER_RAW_PATH = r"/media/rory/Nathen's Fantom/Inscopix_Raw_Data_Organized"  # Change ideally, so that you won't have to repeat calcium preprocessing
     MICE_PATHS_IN_RAW = [
         os.path.join(MASTER_RAW_PATH, mouse) for mouse in os.listdir(MASTER_RAW_PATH)
     ]
@@ -342,14 +344,16 @@ def main():
             BATCH_PATH = os.path.join(MASTER_PATH, folder)
             for mouse in os.listdir(BATCH_PATH):
                 if "BLA" in mouse:
-                    ROOT_PATH = os.path.join(BATCH_PATH, mouse)
+                    MOUSE_ROOT_PATH = os.path.join(BATCH_PATH, mouse)
                     RAW_ROOT_PATH = None
                     for raw_mice_path in MICE_PATHS_IN_RAW:
                         if mouse in raw_mice_path:
-                            RAW_MOUSE_PATH = raw_mice_path
+                            RAW_ROOT_PATH = raw_mice_path
 
+                    print(f"Mouse processed path: {MOUSE_ROOT_PATH}")
+                    print(f"Mouse raw path: {RAW_ROOT_PATH}")
                     # Indicate for what root directory are these utilities for
-                    util = CalciumPreprocessing(ROOT_PATH, RAW_ROOT_PATH)
+                    util = CalciumPreprocessing(MOUSE_ROOT_PATH, RAW_ROOT_PATH)
 
                     cellsets, roots = util.get_input_cell_set_files()
                     # example: /media/rory/PTP Inscopix 2/PTP_Inscopix_#3/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1/2021-05-10-09-45-37_video_BLA-Insc-5_RM_D1/cnmfe_cellset.isxd
@@ -412,6 +416,7 @@ def main():
                         # print("here")
 
                         # preprocess long reg file and export
+                        # GETTING THOSE CELLS ONLY ABOVE ncc score of above 0.9
                         mod_longreg_df = util.preprocess_longreg_results(
                             meta_csv_filename, 0.90, roots
                         )
@@ -510,6 +515,12 @@ def main():
                             )
 
                     print("All done!")
+
+
+if __name__ == "__main__":
+
+    main()
+    # run_per_mouse()
 
 
 def run_per_mouse():
@@ -658,9 +669,3 @@ def run_per_mouse():
             print(("Root path %s does not have an ABET file!") % (root_out_path))
 
     print("All done!")
-
-
-if __name__ == "__main__":
-
-    # main()
-    run_per_mouse()

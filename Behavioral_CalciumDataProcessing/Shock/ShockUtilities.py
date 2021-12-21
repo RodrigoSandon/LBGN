@@ -16,7 +16,7 @@ class ShockUtilities:
             else:
                 return "Not Found"
 
-        return pd.Series({"Shock Time": shock_time()})
+        return pd.Series({"Shock Time (s)": shock_time()})
 
     def del_first_row(df):
         df = df[1:]
@@ -27,6 +27,6 @@ class ShockUtilities:
         new_col = np.arange(0, 0.52, 0.02).tolist()
         # print(f"New col: {new_col}")
 
-        df.insert(1, "Shock Intensity", new_col)
+        df.insert(1, "Shock Intensity (mA)", new_col)
 
         return df
