@@ -502,7 +502,7 @@ class CellClassification(Utilities):
         neutral_cells = []
         number_cells = 0
 
-        for col in list(self.df.columns):
+        for col in list(self.df.columns):  # a col is a cell
             number_cells += 1
 
             sub_df_baseline_lst = Utilities.create_subwindow_of_list(
@@ -571,7 +571,7 @@ def main():
 
     """
 
-    CONCAT_CELLS_PATH = r"/Users/rodrigosandon/Documents/GitHub/LBGN/SampleData/truncating_bug/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
+    CONCAT_CELLS_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
     df = pd.read_csv(CONCAT_CELLS_PATH)
     df = Utilities.change_cell_names(df)
 
@@ -584,7 +584,7 @@ def main():
         upper_bound_time=2,
         reference_pair={0: 100},
         hertz=10,
-        test="stdev binary test",
+        test="wilcoxon rank sum test",
     )
 
 
