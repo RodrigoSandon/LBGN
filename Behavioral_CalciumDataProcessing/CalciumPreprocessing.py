@@ -347,7 +347,7 @@ def main():
                     MOUSE_ROOT_PATH = os.path.join(BATCH_PATH, mouse)
                     RAW_ROOT_PATH = None
                     for raw_mice_path in MICE_PATHS_IN_RAW:
-                        if mouse in raw_mice_path:
+                        if mouse == raw_mice_path.split("/")[-1]:
                             RAW_ROOT_PATH = raw_mice_path
 
                     print(f"Mouse processed path: {MOUSE_ROOT_PATH}")
