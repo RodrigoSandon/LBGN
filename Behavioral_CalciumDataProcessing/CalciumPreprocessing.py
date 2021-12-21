@@ -300,21 +300,31 @@ class CalciumPreprocessing:
         ]
         return dff_traces
 
+    def is_shock_session(self, abet_path) -> bool:
+        if "Shock Test" in abet_path:
+            return True
+        else:
+            return False
+
     def add_gpio_start_time_to_ABET_cols(self, abet_path, gpio_start_time):
         df_abet = pd.read_csv(abet_path)
-        print(df_abet.head())
-        print(
+        # print(df_abet.head())
+        """print(
             type(df_abet["Start Time (s)"]),
             df_abet["Start Time (s)"],
             type(gpio_start_time),
             gpio_start_time,
-        )
-        df_abet["Start Time (s)"] = df_abet["Start Time (s)"] + gpio_start_time
-        df_abet["Choice Time (s)"] = df_abet["Choice Time (s)"] + gpio_start_time
-        df_abet["Collection Time (s)"] = (
-            df_abet["Collection Time (s)"] + gpio_start_time
-        )
-        print(df_abet.head())
+        )"""
+        if self.is_shock_session(abet_path) == True:
+            df_abet["Shock Time (s)"] = df_abet["Shock Time (s)"] + gpio_start_time
+
+        elif self.is_shock_session(abet_path) == False:
+            df_abet["Start Time (s)"] = df_abet["Start Time (s)"] + gpio_start_time
+            df_abet["Choice Time (s)"] = df_abet["Choice Time (s)"] + gpio_start_time
+            df_abet["Collection Time (s)"] = (
+                df_abet["Collection Time (s)"] + gpio_start_time
+            )
+        # print(df_abet.head())
         return df_abet
 
 
@@ -358,6 +368,7 @@ def main():
                     cellsets, roots = util.get_input_cell_set_files()
                     # example: /media/rory/PTP Inscopix 2/PTP_Inscopix_#3/BLA-Insc-5/Session-20210510-093930_BLA-Insc-5_RM_D1/2021-05-10-09-45-37_video_BLA-Insc-5_RM_D1/cnmfe_cellset.isxd
                     # session name is at the [6] split
+                    # Identifies all cellsets in mouse and its according root paths for cellsets
 
                     # Make sure output files don't already exist- else an error
                     to_delete = [
@@ -473,7 +484,9 @@ def main():
                     gpio_file_paths = util.find_raw_recursively(".gpio")
                     print("GPIOs found: ", gpio_file_paths)
                     for count, i in enumerate(gpio_file_paths):
-                        root_out_path = roots[count]
+                        root_out_path = roots[
+                            count
+                        ]  # gpio found based on root of cellsets path
                         print("Current working dir: ", root_out_path)
                         path_where_gpio_csv_saved = util.export_gpio(
                             i, root_to_out=root_out_path
