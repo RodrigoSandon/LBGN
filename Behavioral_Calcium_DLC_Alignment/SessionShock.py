@@ -296,96 +296,95 @@ class EventTrace(Neuron):  # for one combo
             -1 * (self.half_of_time_window), self.half_of_time_window, 0.1
         ).tolist()
 
+    def process_dff_traces_by(self):
+        # print("Currently processing dff traces for all groups...")
 
-def process_dff_traces_by(self):
-    # print("Currently processing dff traces for all groups...")
+        # print("groupby list: ", self.groupby_list)
 
-    # print("groupby list: ", self.groupby_list)
+        grouped_table = self.get_abet().groupby(self.groupby_list)
+        # print("abet file: ", self.get_abet().head())
+        # print(grouped_table.groups)
+        # print(type(grouped_table.groups))
 
-    grouped_table = self.get_abet().groupby(self.groupby_list)
-    # print("abet file: ", self.get_abet().head())
-    # print(grouped_table.groups)
-    # print(type(grouped_table.groups))
+        # Now have list o what to group by, say: forced small
+        # Now need to find a way to call dff traces of neuron, but needs to be in df data type
+        # for every group, found by groupby, index into key and or every element (index of abet table)
+        # and make a new table out of it
+        # make prettydict to dict first?
 
-    # Now have list o what to group by, say: forced small
-    # Now need to find a way to call dff traces of neuron, but needs to be in df data type
-    # for every group, found by groupby, index into key and or every element (index of abet table)
-    # and make a new table out of it
-    # make prettydict to dict first?
+        x_axis = self.get_xaxis_list_for_plotting()
+        # print(x_axis)
+        # print(len(x_axis))
 
-    x_axis = self.get_xaxis_list_for_plotting()
-    # print(x_axis)
-    # print(len(x_axis))
+        # SUBCOMBO PROCESSING
+        for key, val in grouped_table.groups.items():
+            # make sure to not include subcombos that have nans in it
 
-    # SUBCOMBO PROCESSING
-    for key, val in grouped_table.groups.items():
-        # make sure to not include subcombos that have nans in it
+            if "nan" not in str(key):
 
-        if "nan" not in str(key):
+                number_of_event_appearances = len(list(val))
+                print(key, ": ", list(val))
 
-            number_of_event_appearances = len(list(val))
-            print(key, ": ", list(val))
+                self.alleventracesforacombo_eventcomboname_dict[
+                    key
+                ] = self.stack_dff_traces_of_group(
+                    list(val), self.start_choice_or_collect_times
+                )
+                # Before converting it to a df, we need to store this 2d array somewhere
+                # and store the corresponding avg traces too
+                """Perform some process on this dict you just updated"""
+                # ??????Necessary???
 
-            self.alleventracesforacombo_eventcomboname_dict[
-                key
-            ] = self.stack_dff_traces_of_group(
-                list(val), self.start_choice_or_collect_times
-            )
-            # Before converting it to a df, we need to store this 2d array somewhere
-            # and store the corresponding avg traces too
-            """Perform some process on this dict you just updated"""
-            # ??????Necessary???
+                # converting that 2d list of lists into df
 
-            # converting that 2d list of lists into df
+                group_df = pd.DataFrame.from_records(
+                    self.alleventracesforacombo_eventcomboname_dict[key]
+                )
 
-            group_df = pd.DataFrame.from_records(
-                self.alleventracesforacombo_eventcomboname_dict[key]
-            )
+                group_df = self.trim_grouped_df(group_df)
+                # print(group_df.head())
+                # Doing some editing on this df
+                group_df = Utilities.rename_all_col_names(group_df, x_axis)
+                """print(
+                    "Event %s has %s events omitted." % (
+                        str(key), self.events_omitted)
+                )"""
+                # print("Dimensions of grouped df:", (group_df.shape))
+                group_df.insert(
+                    loc=0,
+                    column="Event #",
+                    value=Utilities.make_value_list_for_col(
+                        "Event", number_of_event_appearances - self.events_omitted
+                    ),
+                )
 
-            group_df = self.trim_grouped_df(group_df)
-            # print(group_df.head())
-            # Doing some editing on this df
-            group_df = Utilities.rename_all_col_names(group_df, x_axis)
-            """print(
-                "Event %s has %s events omitted." % (
-                    str(key), self.events_omitted)
-            )"""
-            # print("Dimensions of grouped df:", (group_df.shape))
-            group_df.insert(
-                loc=0,
-                column="Event #",
-                value=Utilities.make_value_list_for_col(
-                    "Event", number_of_event_appearances - self.events_omitted
-                ),
-            )
+                # print(group_df)
+                # print(type(key))
+                # making a path for this df to go to (within session path)
 
-            # print(group_df)
-            # print(type(key))
-            # making a path for this df to go to (within session path)
+                combo_name = str(key)
 
-            combo_name = str(key)
+                new_path = os.path.join(
+                    self.session_path,
+                    "SingleCellAlignmentData",
+                    self.cell_name,
+                    self.get_event_traces_name(),
+                    combo_name,
+                )
+                # Insert to aligned dff dict that corresponds to this object
+                # self.aligned_dff_dict[self.get_event_traces_name] = group_df
 
-            new_path = os.path.join(
-                self.session_path,
-                "SingleCellAlignmentData",
-                self.cell_name,
-                self.get_event_traces_name(),
-                combo_name,
-            )
-            # Insert to aligned dff dict that corresponds to this object
-            # self.aligned_dff_dict[self.get_event_traces_name] = group_df
+                os.makedirs(new_path, exist_ok=True)
+                name_of_csv = "plot_ready.csv"
+                csv_path = os.path.join(new_path, name_of_csv)
+                group_df.to_csv(csv_path, index=False)
 
-            os.makedirs(new_path, exist_ok=True)
-            name_of_csv = "plot_ready.csv"
-            csv_path = os.path.join(new_path, name_of_csv)
-            group_df.to_csv(csv_path, index=False)
-
-            ### Add on analysis here ###
-            # 1)
-            Utilities.avg_cell_eventrace(
-                csv_path, self.cell_name, plot=True, export_avg=True
-            )
-            # make sure the events omitted resets after ever subcombo within an eventtrace
-            self.events_omitted = 0
-        else:
-            print("WILL NOT INCLUDE %s" % (str(key)))
+                ### Add on analysis here ###
+                # 1)
+                Utilities.avg_cell_eventrace(
+                    csv_path, self.cell_name, plot=True, export_avg=True
+                )
+                # make sure the events omitted resets after ever subcombo within an eventtrace
+                self.events_omitted = 0
+            else:
+                print("WILL NOT INCLUDE %s" % (str(key)))
