@@ -43,7 +43,7 @@ class Driver:
                 neuron_obj.add_aligned_dff_traces(
                     "Shock Time (s)",
                     half_of_time_window=5,
-                    shock_intensity="Shock Intensity (mA)"
+                    shock_intensity="Bin"
                 )
                 # time always goes first, everything else goes in order (time window not included in name)
                 # print(neuron_obj.categorized_dff_traces)

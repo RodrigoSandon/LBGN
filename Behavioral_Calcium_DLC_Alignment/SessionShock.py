@@ -296,40 +296,6 @@ class EventTrace(Neuron):  # for one combo
             -1 * (self.half_of_time_window), self.half_of_time_window, 0.1
         ).tolist()
 
-    """def create_bin_amounts(self, grouped_table) -> list:
-        list_of_number_of_events_in_each_bin = []
-
-        total_subevents = 0
-        for key, val in grouped_table.groups.items():
-            total_subevents += 1
-
-        remainder = total_subevents % self.bins
-        number_of_events_in_each_bin = total_subevents - remainder/self.bins
-
-        for bin in range(self.bins):
-            # if list is empty (meaning first bin)
-            if not list_of_number_of_events_in_each_bin:
-                bin_amount = number_of_events_in_each_bin + remainder
-                list_of_number_of_events_in_each_bin.append(bin_amount)
-
-
-            else:
-                bin_amount = number_of_events_in_each_bin
-                list_of_number_of_events_in_each_bin.append(bin_amount)
-
-        return list_of_number_of_events_in_each_bin
-
-    def set_subcombo_bin(self, grouped_table):
-        new_bins = {}
-        bin_amounts_list = self.create_bin_amounts(grouped_table)
-
-        count = 0
-        for key, val in grouped_table.groups.items():
-            count += 1
-            if "nan" not in str(key):
-                for num in bin_amounts_list:"""
-
-
 def process_dff_traces_by(self):
     # print("Currently processing dff traces for all groups...")
 
