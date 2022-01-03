@@ -310,7 +310,7 @@ class EventTrace(Neuron):  # for one combo
 
         grouped_table = self.get_abet().groupby(self.groupby_list)
         # print("abet file: ", self.get_abet().head())
-        print(grouped_table.groups)
+        # print(grouped_table.groups)
         # print(type(grouped_table.groups))
 
         # Now have list o what to group by, say: forced small
@@ -330,7 +330,7 @@ class EventTrace(Neuron):  # for one combo
             if "nan" not in str(key):
 
                 number_of_event_appearances = len(list(val))
-                # print(key, ": ", list(val))
+                print(key, ": ", list(val))
                 self.alleventracesforacombo_eventcomboname_dict[
                     key
                 ] = self.stack_dff_traces_of_group(
