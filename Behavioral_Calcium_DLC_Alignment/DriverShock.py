@@ -102,7 +102,7 @@ class Driver:
                             pass
                 print("Time taken for %s: %s" %
                       (cell_name, time.time() - start))
-                # break  # <- FOR RUNNING ONE NEURON
+                break  # <- FOR RUNNING ONE NEURON
         except Exception as e:
             print(
                 "NO ABET TABLE FOUND, SO SINGLE CELL ALIGNMENT & ANALYSIS CAN'T BE DONE!"
