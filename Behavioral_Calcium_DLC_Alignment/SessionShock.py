@@ -78,7 +78,7 @@ class Session(object):
             return dlc_df
         elif table_to_extract == "abet":
             path = Utilities.find_dff_trace_path(
-                self.session_path, "_ABET_GPIO_processed.csv"
+                self.session_path, "_ABET_GPIO_groupby_processed.csv"
             )
             if path == None:
                 print("No ABET table found!")
@@ -295,6 +295,7 @@ class EventTrace(Neuron):  # for one combo
         return np.arange(
             -1 * (self.half_of_time_window), self.half_of_time_window, 0.1
         ).tolist()
+
 
 def process_dff_traces_by(self):
     # print("Currently processing dff traces for all groups...")
