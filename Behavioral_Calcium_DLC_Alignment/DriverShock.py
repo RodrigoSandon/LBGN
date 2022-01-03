@@ -17,7 +17,7 @@ class Driver:
 
     def run_one_session_one_neuron():
         list_of_combos_we_care_about = [
-            "Shock Intensity (mA)_Shock Time (s)"
+            "Bin_Shock Time (s)"
         ]
         try:
             SESSION_PATH = (

@@ -34,13 +34,13 @@ def main():
             for num in range(0, 6):
                 new_col_list.append("0-0.1")
             for num in range(0, 5):
-                new_col_list.append(".12-0.2")
+                new_col_list.append("0.12-0.2")
             for num in range(0, 5):
-                new_col_list.append(".22-0.3")
+                new_col_list.append("0.22-0.3")
             for num in range(0, 5):
-                new_col_list.append(".32-0.4")
+                new_col_list.append("0.32-0.4")
             for num in range(0, 5):
-                new_col_list.append(".42-0.5")
+                new_col_list.append("0.42-0.5")
 
             df["Bin"] = new_col_list
             new_name = abet_path.replace(
