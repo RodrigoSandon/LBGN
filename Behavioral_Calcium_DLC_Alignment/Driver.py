@@ -125,6 +125,7 @@ class Driver:
                                         trial_type="Trial Type",
                                         reward_size="Reward Size",
                                     )"""
+                                # 12/22/21 <- how to align shock sessions?
                                 neuron_obj.add_aligned_dff_traces(
                                     "Choice Time (s)",
                                     half_of_time_window=10,
