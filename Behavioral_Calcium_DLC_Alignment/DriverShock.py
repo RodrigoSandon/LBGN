@@ -15,26 +15,7 @@ class Driver:
 
     def run_one_session_one_neuron():
         list_of_combos_we_care_about = [
-            "Block_Choice Time (s)",
-            "Block_Learning Stratergy_Choice Time (s)",
-            "Block_Omission_Choice Time (s)",
-            "Block_Reward Size_Choice Time (s)",
-            "Block_Reward Size_Shock Ocurred_Choice Time (s)",
-            "Block_Shock Ocurred_Choice Time (s)",
-            "Block_Trial Type_Choice Time (s)",
-            "Shock Ocurred_Choice Time (s)",
-            "Trial Type_Choice Time (s)",
-            "Trial Type_Reward Size_Choice Time (s)",
-            "Block_Trial Type_Omission_Choice Time (s)",
-            "Block_Trial Type_Reward Size_Choice Time (s)",
-            "Block_Trial Type_Shock Ocurred_Choice Time (s)",
-            "Block_Trial Type_Win or Loss_Choice Time (s)",
-            "Trial Type_Shock Ocurred_Choice Time (s)",
-            "Win or Loss_Choice Time (s)",
-            "Block_Win or Loss_Choice Time (s)",
-            "Learning Stratergy_Choice Time (s)",
-            "Omission_Choice Time (s)",
-            "Reward Size_Choice Time (s)",
+            "Shock Intensity (mA)_Shock Time (s)"
         ]
         try:
             SESSION_PATH = (
