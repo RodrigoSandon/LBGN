@@ -358,7 +358,7 @@ class EventTrace(Neuron):  # for one combo
                     ),
                 )
 
-                # print(group_df)
+                print(group_df)
                 # print(type(key))
                 # making a path for this df to go to (within session path)
 

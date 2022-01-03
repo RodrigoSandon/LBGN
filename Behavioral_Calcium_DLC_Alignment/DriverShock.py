@@ -70,29 +70,10 @@ class Driver:
                         ]
 
                         if bool(is_eventname_in_list_we_care_about) == True:
-                            """print(
-                                f"WE CARE ABOUT: {eventraces.get_event_traces_name()}"
-                            )"""
                             number_of_event_traces += 1
-                            """print(
-                                    "Event trace number: ",
-                                    number_of_event_traces,
-                                )"""
-                            # print(eventraces.get_dff_traces_of_neuron())
-                            # but can it pull the abet data for every event trace?
-                            # print(eventraces.get_abet())
-                            """now I have abet and dff ready to go, now write
-                                a function in EventTraces to make this processed table
-                                for this neuron depending on the input parameters"""
-                            # testing groupby
 
                             eventraces.process_dff_traces_by()  # returns path of csv
-                            # avg_cell_eventrace(csv_path)
-                            # PLOT
                         else:
-                            """print(
-                                f"WE DON'T CARE ABOUT: {eventraces.get_event_traces_name()}"
-                            )"""
                             pass
                 print("Time taken for %s: %s" %
                       (cell_name, time.time() - start))
