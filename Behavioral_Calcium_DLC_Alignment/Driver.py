@@ -1,15 +1,14 @@
+from Session import Session
+import time
+from pathlib import Path
+import os
+import glob
 from builtins import AttributeError
 import sys
 
 import pandas as pd
 
 sys.path.insert(0, "/home/rory/Rodrigo/Behavioral_Calcium_DLC_Analysis")
-import glob
-import os
-from pathlib import Path
-import time
-
-from Session import Session
 
 
 class Driver:
@@ -37,10 +36,9 @@ class Driver:
             "RM D8",
             "RM D9",
             "RM D10",
-            "Shock Test",
             "Late Shock D1",
             "Late Shock D2",
-        ]
+        ]  # 1/3/22 ->DONT INCLUDE SHOCK SESSIONS IN THIS PROCESS
 
         list_of_combos_we_care_about = [
             "Block_Choice Time (s)",
@@ -91,7 +89,7 @@ class Driver:
                                     SESSION_PATH = os.path.join(root, dir_name)
                                     session_paths.append(SESSION_PATH)
 
-                    ### TODO: FIND SESSION PATHS
+                    # TODO: FIND SESSION PATHS
                     print("FOUND SESSION PATHS FOR MOUSE:")
                     print(session_paths)
                     for session_path in session_paths:
@@ -167,7 +165,8 @@ class Driver:
                                         ]
 
                                         if (
-                                            bool(is_eventname_in_list_we_care_about)
+                                            bool(
+                                                is_eventname_in_list_we_care_about)
                                             == True
                                         ):
                                             """print(
@@ -318,7 +317,8 @@ class Driver:
                                 f"WE DON'T CARE ABOUT: {eventraces.get_event_traces_name()}"
                             )"""
                             pass
-                print("Time taken for %s: %s" % (cell_name, time.time() - start))
+                print("Time taken for %s: %s" %
+                      (cell_name, time.time() - start))
                 break  # <- FOR RUNNING ONE NEURON
         except Exception as e:
             print(
