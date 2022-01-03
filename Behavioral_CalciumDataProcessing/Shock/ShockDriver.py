@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import os, glob
 from pathlib import Path
-from ShockSession import ShockSession
+from Session import ShockSession
 from ShockUtilities import ShockUtilities
 from typing import List
 

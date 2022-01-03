@@ -259,21 +259,11 @@ class EventTrace(Neuron):  # for one combo
                 idx_df_lower_bound_time, lower_time_val = self.find_idx_of_time_bound(
                     lower_bound_time
                 )
-                """print(
-                    (
-                        "desired START time to extract dff traces from: %s, actual time extracted: %s"
-                    )
-                    % (lower_bound_time, lower_time_val)
-                )"""
+
                 idx_df_upper_bound_tim, upper_time_val = self.find_idx_of_time_bound(
                     upper_bound_time
                 )
-                """print(
-                    (
-                        "desired END time to extract dff traces from: %s, actual time extracted: %s"
-                    )
-                    % (upper_bound_time, upper_time_val)
-                )"""
+
                 dff_block_of_neuron = list(
                     self.get_dff_traces_of_neuron()[
                         idx_df_lower_bound_time:idx_df_upper_bound_tim

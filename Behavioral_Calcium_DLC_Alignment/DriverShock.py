@@ -1,4 +1,6 @@
-from Session import Session
+from SessionShock import Session
+from SessionShock import Neuron
+from SessionShock import EventTrace
 import time
 from pathlib import Path
 import os
