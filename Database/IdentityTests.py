@@ -1,4 +1,7 @@
-from Behavioral_Calcium_DLC_Analysis.Methods.cell_classification import CellClassification, Utilities
+from Behavioral_Calcium_DLC_Analysis.Methods.cell_classification import (
+    CellClassification,
+    Utilities,
+)
 import pandas as pd
 from scipy import stats
 
@@ -68,10 +71,9 @@ class CellClassification(Utilities):
             active_cells = []
             inactive_cells = []
             neutral_cells = []
-            number_cells = 0
+            number_cells = len(list(self.df.columns))
 
             for col in list(self.df.columns):  # a col is a cell
-                number_cells += 1
 
                 sub_df_baseline_lst = Utilities.create_subwindow_of_list(
                     list(self.df[col]),

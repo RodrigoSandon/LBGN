@@ -222,10 +222,9 @@ class CellClassification(Utilities):
         """
         active_cells = []
         inactive_cells = []
-        number_cells = 0
+        number_cells = len(list(self.df.columns))
 
         for col in list(self.df.columns):
-            number_cells += 1
             mean_of_entire_cell = stats.tmean(list(self.df[col]))
 
             sub_df_baseline_lst = Utilities.create_subwindow_of_list(
@@ -291,11 +290,10 @@ class CellClassification(Utilities):
         """
         active_cells = []
         inactive_cells = []
-        number_cells = 0
+        number_cells = len(list(self.df.columns))
 
         for col in list(self.df.columns):
             print(col)
-            number_cells += 1
             rand_data_lst = [i for i in list(self.df[col])]
             count = 0
             while count != 1000:
@@ -366,10 +364,9 @@ class CellClassification(Utilities):
         """
         active_cells = []
         inactive_cells = []
-        number_cells = 0
+        number_cells = len(list(self.df.columns))
 
         for col in list(self.df.columns):
-            number_cells += 1
             mean_of_entire_cell = stats.tmean(list(self.df[col]))
 
             sub_df_baseline_lst = Utilities.create_subwindow_of_list(
@@ -428,10 +425,9 @@ class CellClassification(Utilities):
         active_cells = []
         inactive_cells = []
         neutral_cells = []
-        number_cells = 0
+        number_cells = len(list(self.df.columns))
 
         for col in list(self.df.columns):
-            number_cells += 1
             mean_of_entire_cell = stats.tmean(list(self.df[col]))
 
             sub_df_baseline_lst = Utilities.create_subwindow_of_list(
@@ -500,10 +496,9 @@ class CellClassification(Utilities):
         active_cells = []
         inactive_cells = []
         neutral_cells = []
-        number_cells = 0
+        number_cells = len(list(self.df.columns))
 
         for col in list(self.df.columns):  # a col is a cell
-            number_cells += 1
 
             sub_df_baseline_lst = Utilities.create_subwindow_of_list(
                 list(self.df[col]),

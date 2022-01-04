@@ -36,3 +36,13 @@ def walk(top, topdown=True, onerror=None, followlinks=False, maxdepth=None):
                     yield x
     if not topdown:
         yield top, dirs, nondirs
+
+
+start = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2"
+
+for root, dirs, files in walk(start, maxdepth=2):
+    for dir in dirs:
+        print(dir)
+    for root, dirs, files in walk(start, maxdepth=3):
+        for dir in dirs:
+            print(dir)

@@ -1,0 +1,422 @@
+﻿RDT D2/
+    Block_Choice Time (s)/
+        1.0/
+
+
+        2.0/
+
+
+        3.0/
+
+
+    Block_Learning Stratergy_Choice Time (s)/
+        (1.0, 'Win Stay')/
+
+
+        (2.0, 'Lose Omit')/
+
+
+        (2.0, 'Lose Shift')/
+
+
+        (2.0, 'Win Stay')/
+
+
+        (3.0, 'Lose Omit')/
+
+
+        (3.0, 'Lose Shift')/
+
+
+        (3.0, 'Win Stay')/
+            
+    Block_Omission_Choice Time (s)/
+        (1.0, 'ITI')/
+
+
+        (2.0, 'ITI')/
+
+
+        (2.0, 'Omission')/
+
+
+        (3.0, 'ITI')/
+
+
+        (3.0, 'Omission')/
+
+
+    Block_Reward Size_Choice Time (s)/
+        (1.0, 'Large')/
+
+
+        (1.0, 'Small')/
+
+
+        (2.0, 'Large')/
+
+
+        (2.0, 'Small')/
+            
+        (3.0, 'Large')/
+    
+        (3.0, 'Small')/
+
+
+    Block_Reward Size_Shock Ocurred_Choice Time (s)/
+        (1.0, 'Large', False)/
+
+
+        (1.0, 'Small', False)/
+            
+            
+            
+        (2.0, 'Large', False)/
+            
+            
+            
+        (2.0, 'Large', True)/
+            
+            
+            
+        (2.0, 'Small', False)/
+            
+            
+            
+        (3.0, 'Large', False)/
+            
+            
+            
+            
+        (3.0, 'Large', True)/
+            
+            
+            
+        (3.0, 'Small', False)/
+            
+            
+            
+    Block_Shock Ocurred_Choice Time (s)/
+
+
+        (1.0, False)/
+            
+            
+            
+        (2.0, False)/
+            
+            
+            
+        (2.0, True)/
+            
+            
+            
+        (3.0, False)/
+            
+            
+            
+        (3.0, True)/
+            
+            
+            
+    Block_Trial Type_Choice Time (s)/
+
+
+        (1.0, 'Forced')/
+            
+            
+            
+        (1.0, 'Free')/
+            
+            
+            
+        (2.0, 'Forced')/
+            
+            
+            
+        (2.0, 'Free')/
+            
+            
+            
+        (3.0, 'Forced')/
+            
+            
+            
+        (3.0, 'Free')/
+            
+            
+            
+    Block_Trial Type_Omission_Choice Time (s)/
+
+
+        (1.0, 'Forced', 'ITI')/
+            
+            
+            
+        (2.0, 'Forced', 'ITI')/
+            
+            
+            
+        (2.0, 'Free', 'Omission')/
+            
+            
+            
+            
+        (3.0, 'Forced', 'ITI')/
+            
+            
+            
+        (3.0, 'Free', 'Omission')/
+            
+            
+            
+            
+    Block_Trial Type_Reward Size_Choice Time (s)/
+
+
+        (1.0, 'Forced', 'Large')/
+            
+            
+            
+        (1.0, 'Forced', 'Small')/
+            
+            
+            
+        (1.0, 'Free', 'Large')/
+            
+            
+            
+        (2.0, 'Forced', 'Large')/
+            
+            
+            
+        (2.0, 'Forced', 'Small')/
+            
+            
+            
+        (2.0, 'Free', 'Large')/
+            
+            
+            
+        (2.0, 'Free', 'Small')/
+            
+            
+            
+        (3.0, 'Forced', 'Large')/
+            
+            
+            
+        (3.0, 'Forced', 'Small')/
+            
+            
+            
+        (3.0, 'Free', 'Large')/
+            
+            
+            
+        (3.0, 'Free', 'Small')/
+            
+            
+            
+    Block_Trial Type_Shock Ocurred_Choice Time (s)/
+
+
+        (1.0, 'Forced', False)/
+            
+            
+            
+        (1.0, 'Free', False)/
+            
+            
+            
+        (2.0, 'Forced', False)/
+            
+            
+            
+        (2.0, 'Forced', True)/
+            
+            
+            
+        (2.0, 'Free', False)/
+            
+            
+            
+        (2.0, 'Free', True)/
+            
+            
+            
+        (3.0, 'Forced', False)/
+            
+            
+            
+        (3.0, 'Forced', True)/
+            
+            
+            
+        (3.0, 'Free', False)/
+            
+            
+            
+        (3.0, 'Free', True)/
+            
+            
+            
+            
+    Block_Trial Type_Win or Loss_Choice Time (s)/
+
+
+        (1.0, 'Free', 'Win')/
+            
+            
+            
+        (2.0, 'Free', 'Loss')/
+            
+            
+            
+        (2.0, 'Free', 'Win')/
+            
+            
+            
+            
+        (3.0, 'Free', 'Loss')/
+            
+            
+            
+            
+        (3.0, 'Free', 'Win')/
+            
+            
+            
+    Block_Win or Loss_Choice Time (s)/
+
+
+        (1.0, 'Win')/
+            
+            
+            
+        (2.0, 'Loss')/
+            
+            
+            
+        (2.0, 'Win')/
+            
+            
+            
+            
+        (3.0, 'Loss')/
+            
+            
+            
+            
+        (3.0, 'Win')/
+            
+            
+            
+    Learning Stratergy_Choice Time (s)/
+
+
+        Lose Omit/
+            
+            
+            
+            
+        Lose Shift/
+            
+            
+            
+            
+        Win Stay/
+            
+            
+            
+    Omission_Choice Time (s)/
+
+
+        ITI/
+            
+            
+            
+        Omission/
+            
+            
+            
+            
+    Reward Size_Choice Time (s)/
+
+
+        Large/
+            
+            
+            
+        Small/
+            
+            
+            
+    Shock Ocurred_Choice Time (s)/
+
+
+        False/
+            
+            
+            
+        True/
+            
+            
+            
+    Trial Type_Choice Time (s)/
+
+
+        Forced/
+            
+            
+            
+        Free/
+            
+            
+            
+    Trial Type_Reward Size_Choice Time (s)/
+
+
+        ('Forced', 'Large')/
+            
+            
+            
+        ('Forced', 'Small')/
+            
+            
+            
+        ('Free', 'Large')/
+            
+            
+            
+        ('Free', 'Small')/
+            
+            
+            
+    Trial Type_Shock Ocurred_Choice Time (s)/
+
+
+        ('Forced', False)/
+            
+            
+            
+        ('Forced', True)/
+            
+            
+            
+        ('Free', False)/
+            
+            
+            
+        ('Free', True)/
+            
+            
+            
+    Win or Loss_Choice Time (s)/
+
+
+        Loss/
+            
+            
+            
+        Win/

@@ -11,6 +11,6 @@ def list_files(startpath):
             print("{}{}".format(subindent, f))
 
 
-start_path = r"/media/rory/Nathen's Fantom/Inscopix_to_Analyze/BLA-Insc-8"
+start_path = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2"
 
 list_files(start_path)
