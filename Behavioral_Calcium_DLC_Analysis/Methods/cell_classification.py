@@ -2,10 +2,11 @@ import pandas as pd
 import numpy as np
 import math
 import random
-from scipy import stats
-from scipy.ndimage import gaussian_filter1d
+
+# from ndimage import gaussian_filter1d
 from matplotlib import pyplot as plt
 from operator import attrgetter
+from scipy import stats
 
 
 class Cell:

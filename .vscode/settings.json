@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./Behavioral_Calcium_DLC_Analysis/Methods/scipy/scipy"
+    ]
+}

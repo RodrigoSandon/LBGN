@@ -1,4 +1,4 @@
-    """
+"""
     Purpose:
         To be able to serialize and deserialize this neuron objects as an input (blob)/output
         (python object) for writing/quereying single cell information via SQLite/Python.
@@ -16,8 +16,8 @@
         
     """
 
-class Neuron:
 
+class Neuron:
     def __init__(self, name):
         self.name = name
         self.mouse_origin = name.split("_")[0]
