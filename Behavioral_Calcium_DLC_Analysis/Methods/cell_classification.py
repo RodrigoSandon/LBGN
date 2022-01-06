@@ -6,7 +6,7 @@ import random
 # from ndimage import gaussian_filter1d
 from matplotlib import pyplot as plt
 from operator import attrgetter
-from scipy import stats
+from scipy.stats import stats
 
 
 class Cell:
@@ -517,17 +517,17 @@ class CellClassification(Utilities):
                 hertz=10,
             )
 
-            result_greater = stats.ranksums(
+            result_greater = stats.mannwhitneyu(
                 sub_df_lst, sub_df_baseline_lst, alternative="greater"
             )
 
-            result_less = stats.ranksums(
+            result_less = stats.mannwhitneyu(
                 sub_df_lst, sub_df_baseline_lst, alternative="less"
             )
 
-            if result_greater.pvalue < (0.01 / number_cells):  # 0.005 * 2 = 0.01
+            if result_greater.pvalue < 0.01:  # 0.005 * 2 = 0.01
                 active_cells.append(col)
-            elif result_less.pvalue < (0.01 / number_cells):
+            elif result_less.pvalue < 0.01:
                 inactive_cells.append(col)
             else:
                 neutral_cells.append(col)
@@ -547,7 +547,7 @@ class CellClassification(Utilities):
             f"Wilcoxon Rank Sum Test (n={number_cells})",
             list(d.values()),
             list(d.keys()),
-            replace_name=f"{replace_name_prefix}_0-2s_-10-0s_bonferroni_pie_wilcoxon_rank_sum.png",
+            replace_name=f"{replace_name_prefix}_0-2s_-10-0s_pie_wilcoxon_rank_sum.png",
         )
 
 

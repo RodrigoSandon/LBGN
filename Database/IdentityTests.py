@@ -1,15 +1,16 @@
-from Behavioral_Calcium_DLC_Analysis.Methods.cell_classification import (
-    CellClassification,
-    Utilities,
-)
+from Behavioral_Calcium_DLC_Analysis.Methods.cell_classification import Utilities
 import pandas as pd
-from scipy import stats
+from scipy.stats import stats
+from Neuron import Neuron
+import sqlite3
 
 
-class CellClassification(Utilities):
+class IdentityTest(Utilities):
     def __init__(
         self,
         csv_path: str,
+        session: str,
+        event_type: str,
         df: pd.DataFrame,
         standardize: bool,
         smooth: bool,
@@ -23,6 +24,8 @@ class CellClassification(Utilities):
         super().__init__()
 
         self.csv_path = csv_path
+        self.session = session
+        self.event_type = event_type
         self.standardize = standardize
         self.smooth = smooth
         # for the time window we are doing the tests based off of
@@ -49,20 +52,20 @@ class CellClassification(Utilities):
             self.df = Utilities.gaussian_smooth(df)
 
         if test == "stdev binary test":
-            CellClassification.stdev_difference_test(self)
-            CellClassification.stdev_difference_test_shuffled(self)
+            IdentityTest.stdev_difference_test(self)
+            IdentityTest.stdev_difference_test_shuffled(self)
         elif test == "two sample t test":
-            CellClassification.two_sample_t_test(self)
+            IdentityTest.two_sample_t_test(self)
         elif test == "one sample t test":
-            CellClassification.one_sample_t_test(self)
+            IdentityTest.one_sample_t_test(self)
         elif test == "wilcoxon rank sum test":
-            CellClassification.wilcoxon_rank_sum(self)
+            IdentityTest.wilcoxon_rank_sum(self)
         elif test == "all":
-            CellClassification.stdev_difference_test(self)
-            CellClassification.stdev_difference_test_shuffled(self)
-            CellClassification.two_sample_t_test(self)
-            CellClassification.one_sample_t_test(self)
-            CellClassification.wilcoxon_rank_sum(self)
+            IdentityTest.stdev_difference_test(self)
+            IdentityTest.stdev_difference_test_shuffled(self)
+            IdentityTest.two_sample_t_test(self)
+            IdentityTest.one_sample_t_test(self)
+            IdentityTest.wilcoxon_rank_sum(self)
 
         else:
             print("Test is not available!")
@@ -74,6 +77,10 @@ class CellClassification(Utilities):
             number_cells = len(list(self.df.columns))
 
             for col in list(self.df.columns):  # a col is a cell
+                # Check if neuron's cell name already exists in this current session's table
+                neuron = Neuron(col)
+
+                # neuron's will never match by their object id, instead, by their attribute (cell name)
 
                 sub_df_baseline_lst = Utilities.create_subwindow_of_list(
                     list(self.df[col]),
@@ -91,21 +98,48 @@ class CellClassification(Utilities):
                     hertz=10,
                 )
 
-                result_greater = stats.ranksums(
+                result_greater = stats.mannwhitneyu(
                     sub_df_lst, sub_df_baseline_lst, alternative="greater"
                 )
 
-                result_less = stats.ranksums(
+                result_less = stats.mannwhitneyu(
                     sub_df_lst, sub_df_baseline_lst, alternative="less"
                 )
 
                 # 0.005 * 2 = 0.01
                 if result_greater.pvalue < (0.01 / number_cells):
-                    active_cells.append(col)
+                    neuron.add_id(
+                        self.session,
+                        self.test,
+                        sample_size=number_cells,
+                        subwindow_base="-10-0",
+                        subwindow_post="0-2",
+                        standardize=False,
+                        smooth=False,
+                        identity="+",
+                    )
                 elif result_less.pvalue < (0.01 / number_cells):
-                    inactive_cells.append(col)
+                    neuron.add_id(
+                        self.session,
+                        self.test,
+                        sample_size=number_cells,
+                        subwindow_base="-10-0",
+                        subwindow_post="0-2",
+                        standardize=False,
+                        smooth=False,
+                        identity="-",
+                    )
                 else:
-                    neutral_cells.append(col)
+                    neuron.add_id(
+                        self.session,
+                        self.test,
+                        sample_size=number_cells,
+                        subwindow_base="-10-0",
+                        subwindow_post="0-2",
+                        standardize=False,
+                        smooth=False,
+                        identity="Neutral",
+                    )
 
             d = {
                 "(+) Active Cells": len(active_cells),
@@ -120,12 +154,35 @@ class CellClassification(Utilities):
 
 def main():
 
+    # Create SQl table here
+    conn = sqlite3.connect("BLA_Cells_Identity_Tracker.db")
+    c = conn.cursor()
+
     CONCAT_CELLS_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
+
+    session = CONCAT_CELLS_PATH.split("/")[6]
+
+    c.execute(
+        f"""
+
+    CREATE TABLE {session} (
+        
+        cell_name TEXT,
+        cell_object BLOB
+    )   
+    """
+    )
+
+    event_type = "_".join(
+        CONCAT_CELLS_PATH.split("/")[7], CONCAT_CELLS_PATH.split("/")[8]
+    )
     df = pd.read_csv(CONCAT_CELLS_PATH)
     df = Utilities.change_cell_names(df)
 
-    CellClassification(
+    IdentityTest(
         CONCAT_CELLS_PATH,
+        session,
+        event_type,
         df,
         standardize=False,
         smooth=False,

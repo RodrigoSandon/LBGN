@@ -24,8 +24,29 @@ class Neuron:
         self.local_cell_num = name.split("_")[1]
         self.identities = {}
 
-    def add_id(self, session, analysis, event_type, identity):
-        key_name = "_".join(session, analysis, event_type)
+    def add_id(
+        self,
+        session: str,
+        analysis: str,
+        event_type: str,
+        sample_size: int,
+        subwindow_base: str,
+        subwindow_post: str,
+        standardize: bool,
+        smooth: bool,
+        identity: str,
+    ):
+        key_name = "_".join(
+            session,
+            analysis,
+            event_type,
+            sample_size,
+            subwindow_base,
+            subwindow_post,
+            standardize,
+            smooth,
+        )
+
         if key_name in self.identities:
             print("Error: key already exists in identities dictionary!")
         else:
