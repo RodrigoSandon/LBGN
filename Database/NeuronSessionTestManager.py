@@ -17,7 +17,7 @@
     """
 
 
-class Neuron:
+class NeuronSessionTestManager:
     def __init__(self, name):
         self.name = name
         self.mouse_origin = name.split("_")[0]
@@ -26,7 +26,6 @@ class Neuron:
 
     def add_id(
         self,
-        session: str,
         analysis: str,
         event_type: str,
         sample_size: int,
@@ -37,7 +36,6 @@ class Neuron:
         identity: str,
     ):
         key_name = "_".join(
-            session,
             analysis,
             event_type,
             sample_size,
@@ -51,3 +49,5 @@ class Neuron:
             print("Error: key already exists in identities dictionary!")
         else:
             self.identities[key_name] = identity
+
+        return key_name
