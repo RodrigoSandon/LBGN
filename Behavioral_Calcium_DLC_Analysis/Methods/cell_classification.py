@@ -3,10 +3,10 @@ import numpy as np
 import math
 import random
 
-# from ndimage import gaussian_filter1d
+from scipy.ndimage import gaussian_filter1d
 from matplotlib import pyplot as plt
 from operator import attrgetter
-from scipy.stats import stats
+from scipy import stats
 
 
 class Cell:
@@ -52,14 +52,15 @@ class Cell:
             return False
 
     def make_arr_of_focus(self):
-        reference_time = list(self.reference_pair.keys())[0]  # has to come from 0
+        reference_time = list(self.reference_pair.keys())[
+            0]  # has to come from 0
         reference_idx = list(self.reference_pair.values())[0]
 
         idx_start = (self.unknown_time_min * self.hertz) + reference_idx
         # idx_end = (self.unknown_time_max * self.hertz) + reference_idx + 1 ? 11/30/21
         idx_end = (self.unknown_time_max * self.hertz) + reference_idx
 
-        return self.dff_traces[int(idx_start) : int(idx_end)]
+        return self.dff_traces[int(idx_start): int(idx_end)]
 
 
 class Utilities:
@@ -389,7 +390,8 @@ class CellClassification(Utilities):
                 hertz=10,
             )
 
-            result = stats.ttest_1samp(sub_df_lst, base_mean, alternative="two-sided")
+            result = stats.ttest_1samp(
+                sub_df_lst, base_mean, alternative="two-sided")
 
             if result.pvalue < (0.01 / number_cells):  # 0.005 * 2 = 0.01
                 active_cells.append(col)
@@ -454,7 +456,8 @@ class CellClassification(Utilities):
                 sub_df_lst, base_mean, alternative="greater"
             )
 
-            result_less = stats.ttest_1samp(sub_df_lst, base_mean, alternative="less")
+            result_less = stats.ttest_1samp(
+                sub_df_lst, base_mean, alternative="less")
 
             if result_greater.pvalue < (0.01 / number_cells):  # 0.005 * 2 = 0.01
                 active_cells.append(col)
@@ -517,17 +520,17 @@ class CellClassification(Utilities):
                 hertz=10,
             )
 
-            result_greater = stats.mannwhitneyu(
+            result_greater = stats.ranksums(
                 sub_df_lst, sub_df_baseline_lst, alternative="greater"
             )
 
-            result_less = stats.mannwhitneyu(
+            result_less = stats.ranksums(
                 sub_df_lst, sub_df_baseline_lst, alternative="less"
             )
 
-            if result_greater.pvalue < 0.01:  # 0.005 * 2 = 0.01
+            if result_greater.pvalue < (0.01 / number_cells):  # 0.005 * 2 = 0.01
                 active_cells.append(col)
-            elif result_less.pvalue < 0.01:
+            elif result_less.pvalue < (0.01 / number_cells):
                 inactive_cells.append(col)
             else:
                 neutral_cells.append(col)
@@ -547,7 +550,7 @@ class CellClassification(Utilities):
             f"Wilcoxon Rank Sum Test (n={number_cells})",
             list(d.values()),
             list(d.keys()),
-            replace_name=f"{replace_name_prefix}_0-2s_-10-0s_pie_wilcoxon_rank_sum.png",
+            replace_name=f"{replace_name_prefix}_0-2s_-10-0s_bonf_pie_manwhitney_010722.png",
         )
 
 
@@ -567,7 +570,7 @@ def main():
 
     """
 
-    CONCAT_CELLS_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
+    CONCAT_CELLS_PATH = r"/Volumes/T7Touch/NIHBehavioralNeuroscience/Data/BetweenMiceAlignmentData/RDT_D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
     df = pd.read_csv(CONCAT_CELLS_PATH)
     df = Utilities.change_cell_names(df)
 
