@@ -92,43 +92,56 @@ def create_concat_csv(lst_of_all_avg_cell_csv_paths, root_path):
 
 
 def main():
+    lst = ["/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1",
+           "/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#3",
+           "/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#4"]
+    for i in lst:
 
-    MOUSE_BATCH_PATH = Path(
-        "/media/rory/Padlock_DT/BLA_Analysis/PTP_Inscopix_#1")
+        MOUSE_BATCH_PATH = Path(i)
 
-    session_types = [
-        "Shock Test",
-    ]
+        session_types = [
+            "Shock Test",
+        ]
 
-    # file = open(f"{MOUSE_BATCH_PATH}/see_if_right.txt", "w+")
+        # file = open(f"{MOUSE_BATCH_PATH}/see_if_right.txt", "w+")
 
-    for root, dirs, files in os.walk(MOUSE_BATCH_PATH):
-        # file.write(",".join(dirs))
-        for dir_name in dirs:
-            for ses_type in session_types:
-                if (
-                    dir_name.find(ses_type) != -1
-                ):  # means ses type string was found in dirname
-                    print(f"Session type: {ses_type}, Found: {dir_name}")
-                    SESSION_PATH = os.path.join(root, dir_name)
-                    # file.write(f"Identified {SESSION_PATH} as a session path. \n")
-                    print(f"Working on... {SESSION_PATH}")
-                    # file.write(f"ALL OF {SESSION_PATH} AVG PLOT READY CSVS: \n")
-                    lst_of_avg_cell_csv_paths_for_session = (
-                        find_avg_dff_of_cell_for_event(
-                            SESSION_PATH, "avg_plot_ready.csv"
+        for root, dirs, files in os.walk(MOUSE_BATCH_PATH):
+            # file.write(",".join(dirs))
+            for dir_name in dirs:
+                # caveats
+                if dir_name == "RDT D2 NEW_SCOPE":
+                    dir_name = "RDT D2"
+                elif dir_name == "RDT D3 NEW_SCOPE":
+                    dir_name = "RDT D3"
+                elif dir_name == "RM D8 TANGLED":
+                    dir_name = "RM D8"
+                elif dir_name == "Shock Test NEW_SCOPE":
+                    dir_name = "Shock Test"
+
+                for ses_type in session_types:
+                    if (
+                        dir_name == ses_type
+                    ):  # means ses type string was found in dirname
+                        print(f"Session type: {ses_type}, Found: {dir_name}")
+                        SESSION_PATH = os.path.join(root, dir_name)
+                        # file.write(f"Identified {SESSION_PATH} as a session path. \n")
+                        print(f"Working on... {SESSION_PATH}")
+                        # file.write(f"ALL OF {SESSION_PATH} AVG PLOT READY CSVS: \n")
+                        lst_of_avg_cell_csv_paths_for_session = (
+                            find_avg_dff_of_cell_for_event(
+                                SESSION_PATH, "avg_plot_ready.csv"
+                            )
                         )
-                    )
-                    # file.write("\n".join(lst_of_avg_cell_csv_paths_for_session))
-                    bw_cell_alignment_folder_name = "BetweenCellAlignmentData"
-                    bw_cell_data_path = os.path.join(
-                        SESSION_PATH, bw_cell_alignment_folder_name
-                    )
-                    # os.makedirs(bw_cell_data_path, exist_ok=True)
-                    # now in this bw_cell_data_path, make everything, not anywhere else
-                    create_concat_csv(
-                        lst_of_avg_cell_csv_paths_for_session, bw_cell_data_path
-                    )
+                        # file.write("\n".join(lst_of_avg_cell_csv_paths_for_session))
+                        bw_cell_alignment_folder_name = "BetweenCellAlignmentData"
+                        bw_cell_data_path = os.path.join(
+                            SESSION_PATH, bw_cell_alignment_folder_name
+                        )
+                        # os.makedirs(bw_cell_data_path, exist_ok=True)
+                        # now in this bw_cell_data_path, make everything, not anywhere else
+                        create_concat_csv(
+                            lst_of_avg_cell_csv_paths_for_session, bw_cell_data_path
+                        )
 
 
 main()
