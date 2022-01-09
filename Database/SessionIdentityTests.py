@@ -91,9 +91,10 @@ class Utilities:
         return f"_norm-{standardize}_smooth-{smooth}"
 
 
-class IdentityTest(Utilities):
+class WilcoxonIdentityTest:
     def __init__(
         self,
+        conn,
         db_name: str,
         csv_path: str,
         session: str,
@@ -109,8 +110,7 @@ class IdentityTest(Utilities):
         test: str,
     ):
 
-        super().__init__()
-
+        self.conn = conn
         self.db_name = db_name
         self.csv_path = csv_path
         self.session = session
@@ -141,117 +141,123 @@ class IdentityTest(Utilities):
             self.df = Utilities.gaussian_smooth(df)
 
         if test == "ranksum":
-            IdentityTest.wilcoxon_rank_sum(self)
+            self.give_identity_wilcoxon()
 
         else:
             print("Test is not available!")
 
-        def make_col_name(analysis, sample_size, subwindow_base, subwindow_post):
-            key_name = "_".join(
-                analysis,
-                event_type,
-                sample_size,
-                subwindow_base,
-                subwindow_post,
-                standardize,
-                smooth,
-            )
+    def make_col_name(self, sample_size, subwindow_base, subwindow_post):
+        if "(s)" in self.event_type:
+            self.event_type = self.event_type.replace("(s)", "")
 
-            return key_name
+        self.event_type = self.event_type.replace(" ", "_")
+        lst = [self.test,
+               self.event_type,
+               str(sample_size),
+               subwindow_base,
+               subwindow_post,
+               str(self.standardize),
+               str(self.smooth)]
 
-        # does per cell, but df needs to be loaded
-        def wilcoxon_rank_sum(number_cells, cell):
+        key_name = "_".join(lst)
 
-            sub_df_baseline_lst = Utilities.create_subwindow_of_list(
-                list(self.df[cell]),
-                unknown_time_min=-10,
-                unknown_time_max=0,
-                reference_pair={0: 100},
-                hertz=10,
-            )
+        return key_name
 
-            sub_df_lst = Utilities.create_subwindow_of_list(
-                list(self.df[cell]),
-                unknown_time_min=0,
-                unknown_time_max=2,
-                reference_pair={0: 100},
-                hertz=10,
-            )
+    # does per cell, but df needs to be loaded
+    def wilcoxon_rank_sum(self, number_cells, cell):
 
-            result_greater = stats.ranksums(
-                sub_df_lst, sub_df_baseline_lst, alternative="greater"
-            )
+        sub_df_baseline_lst = Utilities.create_subwindow_of_list(
+            list(self.df[cell]),
+            unknown_time_min=-10,
+            unknown_time_max=0,
+            reference_pair={0: 100},
+            hertz=10,
+        )
 
-            result_less = stats.ranksums(
-                sub_df_lst, sub_df_baseline_lst, alternative="less"
-            )
+        sub_df_lst = Utilities.create_subwindow_of_list(
+            list(self.df[cell]),
+            unknown_time_min=0,
+            unknown_time_max=2,
+            reference_pair={0: 100},
+            hertz=10,
+        )
 
-            id = None
-            if result_greater.pvalue < (0.01 / number_cells):
-                id = "+"
-            elif result_less.pvalue < (0.01 / number_cells):
-                id = "-"
+        result_greater = stats.ranksums(
+            sub_df_lst, sub_df_baseline_lst, alternative="greater"
+        )
+
+        result_less = stats.ranksums(
+            sub_df_lst, sub_df_baseline_lst, alternative="less"
+        )
+
+        id = None
+        if result_greater.pvalue < (0.01 / number_cells):
+            id = "+"
+        elif result_less.pvalue < (0.01 / number_cells):
+            id = "-"
+        else:
+            id = "Neutral"
+
+        return id
+
+    def give_identity_wilcoxon(self):
+        number_cells = len(list(self.df.columns))
+
+        for cell in list(self.df.columns):
+
+            # check if cell already exists, (not iin first run)
+            result = None
+            for row in self.cursor.execute(f"SELECT * FROM {self.table_name} WHERE {self.table_name}.cell_name = ?", (cell,)):
+                result = row
+
+            #print(f"Result: {result}")
+            # cell doesn't exists: means we have an empty table
+            new_col_name = self.make_col_name(number_cells,
+                                              subwindow_base="minus10_to_0",
+                                              subwindow_post="0_to_2")
+
+            # then add test (new col)
+            print(new_col_name)
+            self.cursor.execute(
+                f"ALTER TABLE {self.table_name} ADD COLUMN {new_col_name} TEXT")
+            self.conn.commit()
+
+            if not isinstance(result, tuple):
+
+                # then add it's id value
+                id = self.wilcoxon_rank_sum(number_cells, cell)
+
+                # insert cell name and id
+                self.cursor.execute(
+                    f"INSERT INTO {self.table_name} VALUES (?,?)", [cell, id])
+                self.conn.commit()
+
+                """# should still work since still in the same cell
+                self.cursor.execute(
+                    f"UPDATE {self.table_name} SET {new_col_name}=(?) WHERE {self.table_name}.cell_name= (?)", [id, cell])
+                self.conn.commit()"""
+
+            # if already exists: dont insert cell name, jus add test (new col) and its id val, must be a new subevent
+            # (some data already exists in the db from first run)
             else:
-                id = "Neutral"
+                # now new to indicate where to put new value exactly
 
-            return id
+                self.cursor.execute(
+                    f"ALTER TABLE {self.table_name} ADD COLUMN {new_col_name} TEXT")
+                self.conn.commit()
 
-        def give_identity(self):
-            number_cells = len(list(self.df.columns))
+                id = self.wilcoxon_rank_sum(number_cells, cell)
 
-            for cell in list(self.df.columns):
-                neuron = NeuronSessionTestManager(cell)
-
-                # check if cell already exists, (not iin first run)
-                result = None
-                for row in cursor.execute(f"SELECT * FROM {self.db_name} WHERE neurons.cell_name = (?)", (cell,)):
-                    result = row
-
-                #print(f"Result: {result}")
-                # cell doesn't exists: means we have an empty table
-                new_col_name = make_col_name(self.test,
-                                             event_type,
-                                             sample_size=number_cells,
-                                             subwindow_base="-10-0",
-                                             subwindow_post="0-2",
-                                             standardize=False,
-                                             smooth=False)
-
-                if not isinstance(result, tuple):
-
-                    # insert cell name
-                    cursor.execute(
-                        f"INSERT INTO {self.db_name} VALUES (?)", (cell,))
-                    # then add test (new col)
-                    cursor.execute(
-                        f"ALTER TABLE {self.table_name} ADD (?) TEXT", (new_col_name,))
-
-                    # then add it's id value
-                    id = wilcoxon_rank_sum(number_cells, cell)
-
-                    # should still work since still in the same cell
-                    cursor.execute(
-                        f"INSERT INTO {self.db_name} ({new_col_name}) VALUES (?)", (id,))
-
-                # if already exists: dont insert cell name, jus add test (new col) and its id val, must be a new subevent
-                # (some data already exists in the db from first run)
-                else:
-                    # now new to indicate where to put new value exactly
-
-                    cursor.execute(
-                        f"ALTER TABLE {self.table_name} ADD (?) TEXT", (new_col_name,))
-
-                    id = wilcoxon_rank_sum(number_cells, cell)
-
-                    cursor.execute(
-                        f"UPDATE {self.db_name} SET {new_col_name}=(?) WHERE cell_name= (?)", (id, cell))
+                self.cursor.execute(
+                    f"UPDATE {self.table_name} SET {new_col_name}=(?) WHERE {self.table_name}.cell_name= (?)", [id, cell])
+                self.conn.commit()
 
 
 def main():
 
     # Set db name and curr subevent path
     db_name = "BLA_Cells_Identity_Tracker"
-    CONCAT_CELLS_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
+    CONCAT_CELLS_PATH = r"/Volumes/T7Touch/NIHBehavioralNeuroscience/Data/BetweenMiceAlignmentData/RDT_D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
 
     # Create db connection
     conn = sqlite3.connect(f"{db_name}.db")
@@ -259,15 +265,24 @@ def main():
 
     # Create SQl table here
     session = CONCAT_CELLS_PATH.split("/")[6]
-    c.execute(f"CREATE TABLE {session} (cell_name TEXT,)")
+    c.execute(f"""
+
+    CREATE TABLE {session} (
+        cell_name TEXT
+    )
+    
+    """)
+
+    list_of_eventtype_name = [CONCAT_CELLS_PATH.split(
+        "/")[7], CONCAT_CELLS_PATH.split("/")[8]]
 
     # Run a test on a subevent
-    IdentityTest(
+    WilcoxonIdentityTest(
+        conn,
         db_name,
         CONCAT_CELLS_PATH,
         session,
-        event_type="_".join(
-            CONCAT_CELLS_PATH.split("/")[7], CONCAT_CELLS_PATH.split("/")[8]),
+        event_type="_".join(list_of_eventtype_name),
         df=Utilities.change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
         cursor=c,
         standardize=False,
@@ -278,7 +293,6 @@ def main():
         hertz=10,
         test="ranksum",
     )
-    conn.commit()
 
     rows = c.fetchall()
     for row in rows:
