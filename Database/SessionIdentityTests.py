@@ -190,6 +190,9 @@ class WilcoxonIdentityTest:
             sub_df_lst, sub_df_baseline_lst, alternative="less"
         )
 
+        print(result_greater.pvalue)
+        print(result_less.pvalue)
+
         id = None
         if result_greater.pvalue < (0.01 / number_cells):
             id = "+"
@@ -203,6 +206,15 @@ class WilcoxonIdentityTest:
     def give_identity_wilcoxon(self):
         number_cells = len(list(self.df.columns))
 
+        new_col_name = self.make_col_name(number_cells,
+                                          subwindow_base="minus10_to_0",
+                                          subwindow_post="0_to_2")
+        # add test, comes before all the identity giving to cells
+        print(new_col_name)
+        self.cursor.execute(
+            f"ALTER TABLE {self.table_name} ADD COLUMN {new_col_name} TEXT")
+        self.conn.commit()
+
         for cell in list(self.df.columns):
 
             # check if cell already exists, (not iin first run)
@@ -210,43 +222,22 @@ class WilcoxonIdentityTest:
             for row in self.cursor.execute(f"SELECT * FROM {self.table_name} WHERE {self.table_name}.cell_name = ?", (cell,)):
                 result = row
 
-            #print(f"Result: {result}")
+            # then add it's id value
+            id = self.wilcoxon_rank_sum(number_cells, cell)
+            # print(id)
+
             # cell doesn't exists: means we have an empty table
-            new_col_name = self.make_col_name(number_cells,
-                                              subwindow_base="minus10_to_0",
-                                              subwindow_post="0_to_2")
-
-            # then add test (new col)
-            print(new_col_name)
-            self.cursor.execute(
-                f"ALTER TABLE {self.table_name} ADD COLUMN {new_col_name} TEXT")
-            self.conn.commit()
-
             if not isinstance(result, tuple):
-
-                # then add it's id value
-                id = self.wilcoxon_rank_sum(number_cells, cell)
 
                 # insert cell name and id
                 self.cursor.execute(
                     f"INSERT INTO {self.table_name} VALUES (?,?)", [cell, id])
                 self.conn.commit()
 
-                """# should still work since still in the same cell
-                self.cursor.execute(
-                    f"UPDATE {self.table_name} SET {new_col_name}=(?) WHERE {self.table_name}.cell_name= (?)", [id, cell])
-                self.conn.commit()"""
-
-            # if already exists: dont insert cell name, jus add test (new col) and its id val, must be a new subevent
+            # if cellalready exists: dont insert cell name, jus add test (new col) and its id val, must be a new subevent
             # (some data already exists in the db from first run)
             else:
                 # now new to indicate where to put new value exactly
-
-                self.cursor.execute(
-                    f"ALTER TABLE {self.table_name} ADD COLUMN {new_col_name} TEXT")
-                self.conn.commit()
-
-                id = self.wilcoxon_rank_sum(number_cells, cell)
 
                 self.cursor.execute(
                     f"UPDATE {self.table_name} SET {new_col_name}=(?) WHERE {self.table_name}.cell_name= (?)", [id, cell])
