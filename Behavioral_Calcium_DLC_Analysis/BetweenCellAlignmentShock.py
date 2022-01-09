@@ -19,10 +19,10 @@ WARNING: This program relies on a particular data structuring. This one:
 """
 
 
-def find_avg_dff_of_cell_for_event(session_path, endswith):
+def find_avg_dff_of_cell_for_event(session_path, startswith):
 
     files = glob.glob(
-        os.path.join(session_path, "**", "*%s") % (endswith),
+        os.path.join(session_path, "**", "%s*") % (startswith),
         recursive=True,
     )
 
