@@ -113,8 +113,12 @@ class WilcoxonIdentityTest:
         cursor,
         standardize: bool,
         smooth: bool,
+        base_lower_bound_time: int,
+        base_upper_bound_time: int,
         lower_bound_time: int,
         upper_bound_time: int,
+        reference_pair_s: int,
+        reference_pair_idx: int,
         reference_pair: dict,
         hertz: int,
         test: str,
@@ -131,24 +135,15 @@ class WilcoxonIdentityTest:
 
         self.standardize = standardize
         self.smooth = smooth
+        self.base_lower_bound_time = base_lower_bound_time
+        self.base_upper_bound_time = base_upper_bound_time
         self.lower_bound_time = lower_bound_time
         self.upper_bound_time = upper_bound_time
+
+        self.reference_pair_s = reference_pair_s
+        self.reference_pair_idx = reference_pair_idx
         self.reference_pair = reference_pair
         self.hertz = hertz
-
-        if standardize == True and smooth == True:  # major
-            self.df = Utilities.custom_standardize(
-                df, lower_bound_time, upper_bound_time, reference_pair, hertz
-            )
-            self.df = Utilities.gaussian_smooth(self.df)
-        elif standardize == False and smooth == False:  # major
-            self.df = df
-        elif standardize == True and smooth == False:
-            self.df = Utilities.custom_standardize(
-                df, lower_bound_time, upper_bound_time, reference_pair, hertz
-            )
-        elif standardize == False and smooth == True:
-            self.df = Utilities.gaussian_smooth(df)
 
         if test == "ranksum":
             self.give_identity_wilcoxon()
@@ -169,7 +164,6 @@ class WilcoxonIdentityTest:
             str(self.smooth),
         ]
         # SQL DOESNT LIKE THESE CHARACTERS
-
         key_name = "_".join(lst)
         if "." in key_name:
             key_name = key_name.replace(".", "dot")
@@ -183,21 +177,20 @@ class WilcoxonIdentityTest:
             key_name = key_name.replace("'", "")
         return key_name
 
-    # does per cell, but df needs to be loaded
     def wilcoxon_rank_sum(self, number_cells, cell):
 
         sub_df_baseline_lst = Utilities.create_subwindow_of_list(
             list(self.df[cell]),
-            unknown_time_min=-10,
-            unknown_time_max=0,
+            unknown_time_min=self.base_lower_bound_time,
+            unknown_time_max=self.base_upper_bound_time,
             reference_pair={0: 100},
             hertz=10,
         )
 
         sub_df_lst = Utilities.create_subwindow_of_list(
             list(self.df[cell]),
-            unknown_time_min=0,
-            unknown_time_max=2,
+            unknown_time_min=self.lower_bound_time,
+            unknown_time_max=self.upper_bound_time,
             reference_pair={0: 100},
             hertz=10,
         )
@@ -209,9 +202,6 @@ class WilcoxonIdentityTest:
         result_less = stats.mannwhitneyu(
             sub_df_lst, sub_df_baseline_lst, alternative="less"
         )
-
-        # print(result_greater.pvalue)
-        # print(result_less.pvalue)
 
         id = None
         if result_greater.pvalue < (0.01 / number_cells):
@@ -272,57 +262,62 @@ class WilcoxonIdentityTest:
 
 
 def main():
-
-    SESSION = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2"
-
-    csvs = Utilities.find_paths_startswith(SESSION, "all_concat_cells.csv")
+    ROOT = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData"
 
     # Set db name and curr subevent path
-    db_name = "BLA_Cells_Identity_Tracker"
+    db_name = "BLA_Cells_Ranksum_Post_Activity"
 
     # Create db connection
     conn = sqlite3.connect(f"{db_name}.db")
     c = conn.cursor()
 
-    # Create SQl table here
+    for session in os.listdir(ROOT):
+        print(session)
+        SESSION_PATH = os.path.join(ROOT, session)
 
-    c.execute(
-        f"""
+        csvs = Utilities.find_paths_startswith(SESSION_PATH, "all_concat_cells.csv")
 
-    CREATE TABLE RDT_D2 (
-        cell_name TEXT
-    )
-    
-    """
-    )
+        # Create SQl table here
+        table_name = session.replace(" ", "_")
+        c.execute(
+            f"""
 
-    # IF table already created?
-
-    for csv in csvs:
-        CONCAT_CELLS_PATH = csv
-
-        list_of_eventtype_name = [
-            CONCAT_CELLS_PATH.split("/")[7],
-            CONCAT_CELLS_PATH.split("/")[8],
-        ]
-
-        # Run a test on a subevent
-        WilcoxonIdentityTest(
-            conn,
-            db_name,
-            CONCAT_CELLS_PATH,
-            session="RDT_D2",
-            event_type="_".join(list_of_eventtype_name),
-            df=Utilities.change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
-            cursor=c,
-            standardize=False,
-            smooth=False,
-            lower_bound_time=0,
-            upper_bound_time=2,
-            reference_pair={0: 100},
-            hertz=10,
-            test="ranksum",
+        CREATE TABLE {table_name} (
+            cell_name TEXT
         )
+        
+        """
+        )
+
+        # IF table already created?
+
+        for csv in csvs:
+            CONCAT_CELLS_PATH = csv
+
+            list_of_eventtype_name = [
+                CONCAT_CELLS_PATH.split("/")[7],
+                CONCAT_CELLS_PATH.split("/")[8],
+            ]
+
+            # Run a test on a subevent
+            WilcoxonIdentityTest(
+                conn,
+                db_name,
+                CONCAT_CELLS_PATH,
+                session="RDT_D2",
+                event_type="_".join(list_of_eventtype_name),
+                df=Utilities.change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
+                cursor=c,
+                standardize=False,
+                smooth=False,
+                base_lower_bound_time=0,
+                base_upper_bound_time=-10,
+                lower_bound_time=0,
+                upper_bound_time=2,
+                reference_pair={0: 100},
+                hertz=10,
+                test="ranksum",
+            )
 
 
 if __name__ == "__main__":
