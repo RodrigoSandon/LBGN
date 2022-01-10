@@ -43,7 +43,8 @@ class Cell:
                 print("Over 30 samples!")
             return True
         else:
-            return False
+            print(f"{self.cell_name} is not in a normal distribution!")
+            return True
 
     def make_arr_of_focus(self):
         reference_time = list(self.reference_pair.keys())[0]  # has to come from 0

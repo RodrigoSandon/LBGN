@@ -166,7 +166,8 @@ def heatmap(
         ax.set_xlabel("Time relative to choice (s)")
 
         plt.title(
-            f"Smoothed Z-Scores of Neural Ca2+ Traces (n={len(list(df.columns))})")
+            f"Smoothed Z-Scores of Neural Ca2+ Traces (n={len(list(df.columns))})"
+        )
         plt.savefig(out_path)
         plt.close()
 
@@ -185,8 +186,7 @@ def spaghetti_plot(df, file_path, out_path):
             # print("cell: ", cell)
             plt.plot(x, list(df[cell]), label=cell)
         number_cells = len(df.T)
-        plt.title("Smoothed Z-Scores of Neural Ca2+ Traces (n=%s)" %
-                  (number_cells))
+        plt.title("Smoothed Z-Scores of Neural Ca2+ Traces (n=%s)" % (number_cells))
         plt.xlabel("Time (s)")
         plt.ylabel("Z-Score")
         plt.locator_params(axis="x", nbins=20)
@@ -412,6 +412,11 @@ def main():
             pass
 
 
+if __name__ == "__main__":
+    main()
+    # process_one_table()
+
+
 def process_one_table():
     csv_path = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
     df = pd.read_csv(csv_path)
@@ -466,8 +471,7 @@ def process_one_table():
     heatmap(
         df_sorted_new_idx,
         csv_path,
-        out_path=csv_path.replace(
-            ".csv", "_sorted_hm_baseline-10_-1_gauss1.5.png"),
+        out_path=csv_path.replace(".csv", "_sorted_hm_baseline-10_-1_gauss1.5.png"),
         vmin=-2.5,
         vmax=2.5,
         xticklabels=20,
@@ -495,8 +499,3 @@ def process_one_table():
             ".csv", "_scatter_window0_3s_baseline-10_-1_gauss1.5.png"
         ),
     )
-
-
-if __name__ == "__main__":
-    main()
-    # process_one_table()
