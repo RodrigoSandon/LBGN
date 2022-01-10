@@ -2,12 +2,22 @@ import pandas as pd
 from scipy import stats
 from NeuronSessionTestManager import NeuronSessionTestManager
 import sqlite3
+import glob, os
 
 from scipy.ndimage import gaussian_filter1d
 from matplotlib import pyplot as plt
 
 
 class Utilities:
+    def find_paths_startswith(root_path, startswith) -> list:
+
+        files = glob.glob(
+            os.path.join(root_path, "**", "%s*") % (startswith),
+            recursive=True,
+        )
+
+        return files
+
     def change_cell_names(df):
 
         for col in df.columns:
@@ -147,8 +157,6 @@ class WilcoxonIdentityTest:
             print("Test is not available!")
 
     def make_col_name(self, sample_size, subwindow_base, subwindow_post):
-        if "(s)" in self.event_type:
-            self.event_type = self.event_type.replace("(s)", "")
 
         self.event_type = self.event_type.replace(" ", "_")
         lst = [
@@ -160,9 +168,19 @@ class WilcoxonIdentityTest:
             str(self.standardize),
             str(self.smooth),
         ]
+        # SQL DOESNT LIKE THESE CHARACTERS
 
         key_name = "_".join(lst)
-
+        if "." in key_name:
+            key_name = key_name.replace(".", "dot")
+        if "(" in key_name:
+            key_name = key_name.replace("(", "")
+        if ")" in key_name:
+            key_name = key_name.replace(")", "")
+        if "," in key_name:
+            key_name = key_name.replace(",", "")
+        if "'" in key_name:
+            key_name = key_name.replace("'", "")
         return key_name
 
     # does per cell, but df needs to be loaded
@@ -192,8 +210,8 @@ class WilcoxonIdentityTest:
             sub_df_lst, sub_df_baseline_lst, alternative="less"
         )
 
-        print(result_greater.pvalue)
-        print(result_less.pvalue)
+        # print(result_greater.pvalue)
+        # print(result_less.pvalue)
 
         id = None
         if result_greater.pvalue < (0.01 / number_cells):
@@ -255,53 +273,56 @@ class WilcoxonIdentityTest:
 
 def main():
 
+    SESSION = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2"
+
+    csvs = Utilities.find_paths_startswith(SESSION, "all_concat_cells.csv")
+
     # Set db name and curr subevent path
     db_name = "BLA_Cells_Identity_Tracker"
-    CONCAT_CELLS_PATH = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
 
     # Create db connection
     conn = sqlite3.connect(f"{db_name}.db")
     c = conn.cursor()
 
     # Create SQl table here
-    session = CONCAT_CELLS_PATH.split("/")[6]
-    session = session.replace(" ", "_")
+
     c.execute(
         f"""
 
-    CREATE TABLE {session} (
+    CREATE TABLE RDT_D2 (
         cell_name TEXT
     )
     
     """
     )
 
-    list_of_eventtype_name = [
-        CONCAT_CELLS_PATH.split("/")[7],
-        CONCAT_CELLS_PATH.split("/")[8],
-    ]
+    # IF table already created?
 
-    # Run a test on a subevent
-    WilcoxonIdentityTest(
-        conn,
-        db_name,
-        CONCAT_CELLS_PATH,
-        session,
-        event_type="_".join(list_of_eventtype_name),
-        df=Utilities.change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
-        cursor=c,
-        standardize=False,
-        smooth=False,
-        lower_bound_time=0,
-        upper_bound_time=2,
-        reference_pair={0: 100},
-        hertz=10,
-        test="ranksum",
-    )
+    for csv in csvs:
+        CONCAT_CELLS_PATH = csv
 
-    rows = c.fetchall()
-    for row in rows:
-        print(row)
+        list_of_eventtype_name = [
+            CONCAT_CELLS_PATH.split("/")[7],
+            CONCAT_CELLS_PATH.split("/")[8],
+        ]
+
+        # Run a test on a subevent
+        WilcoxonIdentityTest(
+            conn,
+            db_name,
+            CONCAT_CELLS_PATH,
+            session="RDT_D2",
+            event_type="_".join(list_of_eventtype_name),
+            df=Utilities.change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
+            cursor=c,
+            standardize=False,
+            smooth=False,
+            lower_bound_time=0,
+            upper_bound_time=2,
+            reference_pair={0: 100},
+            hertz=10,
+            test="ranksum",
+        )
 
 
 if __name__ == "__main__":

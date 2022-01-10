@@ -322,8 +322,8 @@ def create_subwindow_for_col(
     return subwindow
 
 
-def insert_time_index_to_df(df) -> pd.DataFrame:
-    x_axis = np.arange(-10, 10, 0.1).tolist()
+def insert_time_index_to_df(df, range_min, range_max, step) -> pd.DataFrame:
+    x_axis = np.arange(range_min, range_max, step).tolist()
     # end shoudl be 10.1 and not 10 bc upper limit is exclusive
 
     middle_idx = int(len(x_axis) / 2)
@@ -353,7 +353,7 @@ def main():
         ROOT_PATH, to_look_for_originally, to_look_for_conditional
     )
     # print(csv_list)
-    csv_list.reverse()
+    # csv_list.reverse()
     for count, csv_path in enumerate(csv_list):
 
         print(f"Working on file {count}: {csv_path}")
@@ -384,7 +384,15 @@ def main():
                 hertz=10,
             )
             # print(df.head())
-            df_sorted = insert_time_index_to_df(df_sorted)
+            try:
+                df_sorted = insert_time_index_to_df(
+                    df_sorted, range_min=-10.0, range_max=10.0, step=0.1
+                )
+            except ValueError:
+                print("Index less than 200 data points!")
+                df_sorted = insert_time_index_to_df(
+                    df_sorted, range_min=-10.0, range_max=9.9, step=0.1
+                )
 
             # Create scatter plot here
             # print(df_sorted.head())
@@ -392,9 +400,7 @@ def main():
             heatmap(
                 df_sorted,
                 csv_path,
-                out_path=csv_path.replace(
-                    ".csv", "_sorted_hm_baseline-10_-1_gauss1.5.png"
-                ),
+                out_path=csv_path.replace(".csv", "_hm_baseline-10_-1_gauss1.5.png"),
                 vmin=-2.5,
                 vmax=2.5,
                 xticklabels=20,
@@ -404,7 +410,75 @@ def main():
                 df_sorted,
                 csv_path,
                 out_path=csv_path.replace(
-                    ".csv", "_sorted_spaghetti_baseline-10_-1_gauss1.5.png"
+                    ".csv", "_spaghetti_baseline-10_-1_gauss1.5.png"
+                ),
+            )
+        except FileNotFoundError:
+            print(f"File {csv_path} was not found!")
+            pass
+
+
+def shock():
+
+    ROOT_PATH = (
+        r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/Shock Test"
+    )
+    # ROOT_PATH = r"/Users/rodrigosandon/Documents/GitHub/LBGN/SampleData/truncating_bug"
+
+    csv_list = find_paths_startswith(ROOT_PATH, "all_concat_cells.csv")
+    # print(csv_list)
+    # csv_list.reverse()
+    for count, csv_path in enumerate(csv_list):
+
+        print(f"Working on file {count}: {csv_path}")
+
+        try:
+            df = pd.read_csv(csv_path)
+            # df = truncate_past_len_threshold(df, len_threshold=200)
+
+            df = change_cell_names(df)
+
+            df = custom_standardize(
+                df,
+                unknown_time_min=-5.0,
+                unknown_time_max=0.0,
+                reference_pair={0: 50},
+                hertz=10,
+            )
+
+            df = gaussian_smooth(df.T)
+            df = df.T
+            # print(df.head())
+            # We're essentially gettin the mean of z-score for a time frame to sort
+            df_sorted = sort_cells(
+                df,
+                unknown_time_min=0.0,
+                unknown_time_max=3.0,
+                reference_pair={0: 50},
+                hertz=10,
+            )
+            # print(df.head())
+            df_sorted = insert_time_index_to_df(
+                df_sorted, range_min=-5.0, range_max=5.0, step=0.1
+            )
+
+            # Create scatter plot here
+            # print(df_sorted.head())
+
+            heatmap(
+                df_sorted,
+                csv_path,
+                out_path=csv_path.replace(".csv", "_hm_baseline-5_0_gauss1.5.png"),
+                vmin=-2.5,
+                vmax=2.5,
+                xticklabels=10,
+            )
+
+            spaghetti_plot(
+                df_sorted,
+                csv_path,
+                out_path=csv_path.replace(
+                    ".csv", "_spaghetti_baseline-5_0_gauss1.5.png"
                 ),
             )
         except FileNotFoundError:
@@ -413,11 +487,12 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-    # process_one_table()
+    # main()
+    shock()
 
 
 def process_one_table():
+
     csv_path = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData/RDT D2/Shock Ocurred_Choice Time (s)/True/all_concat_cells.csv"
     df = pd.read_csv(csv_path)
     # df = truncate_past_len_threshold(df, len_threshold=200)

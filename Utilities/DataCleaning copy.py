@@ -38,9 +38,6 @@ def purge(dir, pattern):
 
 
 ROOT = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData"
-del_list = [
-    "all_concat_cells_sorted_hm_baseline-10_-1_gauss1.5.png",
-    "all_concat_cells_sorted_spaghetti_baseline-10_-1_gauss1.5.png",
-]
+del_list = ["all_concat_cells_truncated.csv"]
 
 delete_recursively(ROOT, del_list)

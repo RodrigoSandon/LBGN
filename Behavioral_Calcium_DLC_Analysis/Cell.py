@@ -43,7 +43,7 @@ class Cell:
                 print("Over 30 samples!")
             return True
         else:
-            print(f"{self.cell_name} is not in a normal distribution!")
+            print(f"{self.cell_name} not in a norm dist!")
             return True
 
     def make_arr_of_focus(self):
