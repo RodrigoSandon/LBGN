@@ -158,16 +158,18 @@ class WilcoxonIdentityTest:
             hertz=self.hertz,
         )
 
-        if (sub_df_baseline_lst == sub_df_lst) == True:
-            return "null"
+        try:
+            result_greater = stats.mannwhitneyu(
+                sub_df_lst, sub_df_baseline_lst, alternative="greater"
+            )
 
-        result_greater = stats.mannwhitneyu(
-            sub_df_lst, sub_df_baseline_lst, alternative="greater"
-        )
+            result_less = stats.mannwhitneyu(
+                sub_df_lst, sub_df_baseline_lst, alternative="less"
+            )
 
-        result_less = stats.mannwhitneyu(
-            sub_df_lst, sub_df_baseline_lst, alternative="less"
-        )
+        except ValueError as e:  # very rarely, we'll get a cell that has same df/f values across the subwindows were interested in
+            print(e)
+            return "Neutral"
 
         id = None
         if result_greater.pvalue < (self.alpha / number_cells):
@@ -184,7 +186,7 @@ class WilcoxonIdentityTest:
 
         new_col_name = self.make_col_name(number_cells)
         # add test, comes before all the identity giving to cells
-        print(new_col_name)
+        # print(new_col_name)
         self.cursor.execute(
             f"ALTER TABLE {self.table_name} ADD COLUMN {new_col_name} TEXT"
         )
@@ -238,38 +240,37 @@ def main():
     lst = os.listdir(ROOT)
     lst.reverse()
     for session in lst:
-        print(session)
-        SESSION_PATH = os.path.join(ROOT, session)
+        if session != "Shock Test":  # shock doesn't have a pre choice activity
+            print(session)
+            SESSION_PATH = os.path.join(ROOT, session)
 
-        csvs = Utilities.find_paths_startswith(SESSION_PATH, "all_concat_cells.csv")
+            csvs = Utilities.find_paths_startswith(SESSION_PATH, "all_concat_cells.csv")
 
-        # Create SQl table here
-        table_name = session.replace(" ", "_")
-        if "-" in table_name:
-            table_name = table_name.replace("-", "_")
+            # Create SQl table here
+            table_name = session.replace(" ", "_")
+            if "-" in table_name:
+                table_name = table_name.replace("-", "_")
 
-        c.execute(
-            f"""
+            c.execute(
+                f"""
 
-        CREATE TABLE {table_name} (
-            cell_name TEXT
-        )
-        
-        """
-        )
+            CREATE TABLE {table_name} (
+                cell_name TEXT
+            )
+            
+            """
+            )
 
-        # IF table already created?
+            # IF table already created?
 
-        for csv in csvs:
-            # print(csv)
-            CONCAT_CELLS_PATH = csv
+            for csv in csvs:
+                # print(csv)
+                CONCAT_CELLS_PATH = csv
 
-            list_of_eventtype_name = [
-                CONCAT_CELLS_PATH.split("/")[7],
-                CONCAT_CELLS_PATH.split("/")[8],
-            ]
-
-            if "Shock Test" not in csv:  # shock doesn't have a pre choice activity
+                list_of_eventtype_name = [
+                    CONCAT_CELLS_PATH.split("/")[7],
+                    CONCAT_CELLS_PATH.split("/")[8],
+                ]
 
                 # Run a test on a subevent
                 WilcoxonIdentityTest(
