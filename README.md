@@ -12,6 +12,7 @@ Supervisors: Dr. Patrick Piantadosi and Dr. Andrew Holmes
 # BUGS
 
 1) I thought i fixed the truncation error, but it came back again? Need to make this fix simpler
+   1) Just trim to 200 and that's it
 
 # Main Project: ISX-ABET-DLC Pipeline
 

@@ -9,6 +9,26 @@ from matplotlib import pyplot as plt
 
 
 class Utilities:
+    def find_paths_conditional_endswith(
+        root_path, og_lookfor: str, cond_lookfor: str
+    ) -> list:
+
+        all_files = []
+
+        for root, dirs, files in os.walk(root_path):
+
+            if cond_lookfor in files:
+                # acquire the trunc file
+                file_path = os.path.join(root, cond_lookfor)
+                # print(file_path)
+                all_files.append(file_path)
+            elif cond_lookfor not in files:
+                # acquire the og lookfor
+                file_path = os.path.join(root, og_lookfor)
+                all_files.append(file_path)
+
+        return all_files
+
     def find_paths_startswith(root_path, startswith) -> list:
 
         files = glob.glob(
@@ -18,7 +38,7 @@ class Utilities:
 
         return files
 
-    def change_cell_names(df):
+    def change_cell_names(df: pd.DataFrame):
 
         for col in df.columns:
 
@@ -26,9 +46,6 @@ class Utilities:
             # print(col)
 
         return df
-
-    def zscore(obs_value, mu, sigma):
-        return (obs_value - mu) / sigma
 
     def convert_secs_to_idx(
         unknown_time_min, unknown_time_max, reference_pair: dict, hertz: int
@@ -41,15 +58,6 @@ class Utilities:
         idx_end = (unknown_time_max * hertz) + reference_idx  # exclusive
         return int(idx_start), int(idx_end)
 
-    def create_subwindow_for_col(
-        df, col, unknown_time_min, unknown_time_max, reference_pair, hertz
-    ) -> list:
-        idx_start, idx_end = Utilities.convert_secs_to_idx(
-            unknown_time_min, unknown_time_max, reference_pair, hertz
-        )
-        subwindow = df[col][idx_start:idx_end]
-        return subwindow
-
     def create_subwindow_of_list(
         lst, unknown_time_min, unknown_time_max, reference_pair, hertz
     ) -> list:
@@ -60,98 +68,53 @@ class Utilities:
         subwindow_lst = lst[idx_start:idx_end]
         return subwindow_lst
 
-    def zscore(obs_value, mu, sigma):
-        return (obs_value - mu) / sigma
-
-    def custom_standardize(
-        df, unknown_time_min, unknown_time_max, reference_pair: dict, hertz: int
-    ):
-        for col in df.columns:
-            subwindow = Utilities.create_subwindow_for_col(
-                df, col, unknown_time_min, unknown_time_max, reference_pair, hertz
-            )
-            mean_for_cell = stats.tmean(subwindow)
-            stdev_for_cell = stats.tstd(subwindow)
-
-            new_col_vals = []
-            for ele in list(df[col]):
-                z_value = Utilities.zscore(ele, mean_for_cell, stdev_for_cell)
-                new_col_vals.append(z_value)
-
-            df[col] = new_col_vals
-        return df
-
-    def gaussian_smooth(df, sigma: float = 1.5):
-        # so that it applys smoothing within a cell and not across cells
-        df = df.T.apply(gaussian_filter1d, sigma=sigma, axis=0)
-        # switch back to og transformation
-        return df.T
-
-    def pie_chart(
-        csv_path: str, test_name: str, data: list, labels: list, replace_name: str
-    ):
-        fig = plt.figure(figsize=(10, 7))
-        plt.pie(data, labels=labels, autopct="%1.2f%%")
-        plt.title(test_name)
-        new_name = csv_path.replace(".csv", replace_name)
-        plt.savefig(new_name)
-        plt.close()
-
-    def make_replace_name_suffix_prefix(standardize: bool, smooth: bool):
-        return f"_norm-{standardize}_smooth-{smooth}"
-
 
 class WilcoxonIdentityTest:
     def __init__(
         self,
         conn,
+        cursor,
         db_name: str,
+        df: pd.DataFrame,
         csv_path: str,
         session: str,
         event_type: str,
-        df: pd.DataFrame,
-        cursor,
-        standardize: bool,
-        smooth: bool,
         base_lower_bound_time: int,
         base_upper_bound_time: int,
         lower_bound_time: int,
         upper_bound_time: int,
-        reference_pair_s: int,
-        reference_pair_idx: int,
         reference_pair: dict,
         hertz: int,
-        test: str,
+        alpha,
     ):
-
+        #####SQL STUFF#####
         self.conn = conn
+        self.cursor = cursor
         self.db_name = db_name
+        #####SQL STUFF#####
+
+        self.df = df
         self.csv_path = csv_path
         self.session = session
         self.event_type = event_type
-        self.cursor = cursor
-        self.test = test
+
+        self.test = "mannwhitneyu"
         self.table_name = session
 
-        self.standardize = standardize
-        self.smooth = smooth
         self.base_lower_bound_time = base_lower_bound_time
         self.base_upper_bound_time = base_upper_bound_time
         self.lower_bound_time = lower_bound_time
         self.upper_bound_time = upper_bound_time
-
-        self.reference_pair_s = reference_pair_s
-        self.reference_pair_idx = reference_pair_idx
         self.reference_pair = reference_pair
         self.hertz = hertz
 
-        if test == "ranksum":
-            self.give_identity_wilcoxon()
+        self.alpha = alpha
 
-        else:
-            print("Test is not available!")
+        self.give_identity_wilcoxon()
 
-    def make_col_name(self, sample_size, subwindow_base, subwindow_post):
+    def make_col_name(self, sample_size):
+        subwindow_base = f"{self.base_lower_bound_time}_to_{self.base_upper_bound_time}"
+        subwindow_post = f"{self.lower_bound_time}_to_{self.upper_bound_time}"
 
         self.event_type = self.event_type.replace(" ", "_")
         lst = [
@@ -160,8 +123,6 @@ class WilcoxonIdentityTest:
             str(sample_size),
             subwindow_base,
             subwindow_post,
-            str(self.standardize),
-            str(self.smooth),
         ]
         # SQL DOESNT LIKE THESE CHARACTERS
         key_name = "_".join(lst)
@@ -175,6 +136,8 @@ class WilcoxonIdentityTest:
             key_name = key_name.replace(",", "")
         if "'" in key_name:
             key_name = key_name.replace("'", "")
+        if "-" in key_name:
+            key_name = key_name.replace("-", "minus")
         return key_name
 
     def wilcoxon_rank_sum(self, number_cells, cell):
@@ -183,17 +146,20 @@ class WilcoxonIdentityTest:
             list(self.df[cell]),
             unknown_time_min=self.base_lower_bound_time,
             unknown_time_max=self.base_upper_bound_time,
-            reference_pair={0: 100},
-            hertz=10,
+            reference_pair=self.reference_pair,
+            hertz=self.hertz,
         )
 
         sub_df_lst = Utilities.create_subwindow_of_list(
             list(self.df[cell]),
             unknown_time_min=self.lower_bound_time,
             unknown_time_max=self.upper_bound_time,
-            reference_pair={0: 100},
-            hertz=10,
+            reference_pair=self.reference_pair,
+            hertz=self.hertz,
         )
+
+        if (sub_df_baseline_lst == sub_df_lst) == True:
+            return "null"
 
         result_greater = stats.mannwhitneyu(
             sub_df_lst, sub_df_baseline_lst, alternative="greater"
@@ -204,9 +170,9 @@ class WilcoxonIdentityTest:
         )
 
         id = None
-        if result_greater.pvalue < (0.01 / number_cells):
+        if result_greater.pvalue < (self.alpha / number_cells):
             id = "+"
-        elif result_less.pvalue < (0.01 / number_cells):
+        elif result_less.pvalue < (self.alpha / number_cells):
             id = "-"
         else:
             id = "Neutral"
@@ -216,9 +182,7 @@ class WilcoxonIdentityTest:
     def give_identity_wilcoxon(self):
         number_cells = len(list(self.df.columns))
 
-        new_col_name = self.make_col_name(
-            number_cells, subwindow_base="minus10_to_0", subwindow_post="0_to_2"
-        )
+        new_col_name = self.make_col_name(number_cells)
         # add test, comes before all the identity giving to cells
         print(new_col_name)
         self.cursor.execute(
@@ -265,13 +229,15 @@ def main():
     ROOT = r"/media/rory/Padlock_DT/BLA_Analysis/BetweenMiceAlignmentData"
 
     # Set db name and curr subevent path
-    db_name = "BLA_Cells_Ranksum_Post_Activity"
+    db_name = "BLA_Cells_Ranksum_Pre_Activity"
 
     # Create db connection
     conn = sqlite3.connect(f"{db_name}.db")
     c = conn.cursor()
 
-    for session in os.listdir(ROOT):
+    lst = os.listdir(ROOT)
+    lst.reverse()
+    for session in lst:
         print(session)
         SESSION_PATH = os.path.join(ROOT, session)
 
@@ -279,6 +245,9 @@ def main():
 
         # Create SQl table here
         table_name = session.replace(" ", "_")
+        if "-" in table_name:
+            table_name = table_name.replace("-", "_")
+
         c.execute(
             f"""
 
@@ -292,6 +261,7 @@ def main():
         # IF table already created?
 
         for csv in csvs:
+            # print(csv)
             CONCAT_CELLS_PATH = csv
 
             list_of_eventtype_name = [
@@ -299,25 +269,27 @@ def main():
                 CONCAT_CELLS_PATH.split("/")[8],
             ]
 
-            # Run a test on a subevent
-            WilcoxonIdentityTest(
-                conn,
-                db_name,
-                CONCAT_CELLS_PATH,
-                session="RDT_D2",
-                event_type="_".join(list_of_eventtype_name),
-                df=Utilities.change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
-                cursor=c,
-                standardize=False,
-                smooth=False,
-                base_lower_bound_time=0,
-                base_upper_bound_time=-10,
-                lower_bound_time=0,
-                upper_bound_time=2,
-                reference_pair={0: 100},
-                hertz=10,
-                test="ranksum",
-            )
+            if "Shock Test" not in csv:  # shock doesn't have a pre choice activity
+
+                # Run a test on a subevent
+                WilcoxonIdentityTest(
+                    conn,
+                    c,
+                    db_name,
+                    Utilities.change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
+                    CONCAT_CELLS_PATH,
+                    session=table_name,
+                    event_type="_".join(list_of_eventtype_name),
+                    base_lower_bound_time=-10,
+                    base_upper_bound_time=-5,
+                    lower_bound_time=-3,
+                    upper_bound_time=0,
+                    reference_pair={0: 100},
+                    hertz=10,
+                    alpha=0.01,
+                )
+
+    conn.close()
 
 
 if __name__ == "__main__":
