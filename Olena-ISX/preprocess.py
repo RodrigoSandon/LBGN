@@ -16,10 +16,10 @@ def preprocess(in_path: Path, out_dir: Optional[Path] = None):
 
     def _create_paths(in_path: Path, out_path: Path) -> Dict[str, Path]:
         out = {}
-        out["downsample_path"] = out_path / "downsampled.isxd"
-        out["spatial_filter_path"] = out_path / "spatial_filtered.isxd"
-        out["motion_correct_path"] = out_path / "motion_corrected.isxd"
-        out["cnmfe_path"] = out_path / "cnmfe_cellset.isxd"
+        out["downsample_path"] = out_path / f"downsampled_gSiz{str(gSiz)}.isxd"
+        out["spatial_filter_path"] = out_path / f"spatial_filtered_gSiz{str(gSiz)}.isxd"
+        out["motion_correct_path"] = out_path / f"motion_corrected_gSiz{str(gSiz)}.isxd"
+        out["cnmfe_path"] = out_path / f"cnmfe_cellset_gSiz{str(gSiz)}.isxd"
         for path in out.values():
             if path.exists():
                 path.unlink()
@@ -110,7 +110,7 @@ def preprocess(in_path: Path, out_dir: Optional[Path] = None):
     # left a big cell out and one cell which pnr was low, so we lowered pnr
     #  update 10/18/21 - need to be more lineant as to what is considered a cell
     num_threads = 5  # staying the same
-    gSiz = 16  # cell diameter needs o account for bigger cells, was 16 10/19/21
+    gSiz = 48  # cell diameter needs o account for bigger cells, was 16 10/19/21, now 48
     min_corr = 0.7
     min_pnr = 8  # before was 8 10/18/21, 5 on 10/19/21, changed it back to 8 11/22/21
     bg_spatial_subsampling = 1
@@ -124,12 +124,14 @@ def preprocess(in_path: Path, out_dir: Optional[Path] = None):
     output_unit_type = "df_over_noise"
 
     out_paths = _create_paths(in_path=in_path, out_path=out_dir)
-    _downsample(in_path, out_paths["downsample_path"])
-    _spatial_filter(out_paths["downsample_path"], out_paths["spatial_filter_path"])
-    _motion_correct(out_paths["spatial_filter_path"], out_paths["motion_correct_path"])
+    _downsample(in_path, out_paths[f"downsample_path"])
+    _spatial_filter(out_paths[f"downsample_path"], out_paths[f"spatial_filter_path"])
+    _motion_correct(
+        out_paths[f"spatial_filter_path"], out_paths[f"motion_correct_path"]
+    )
     _cnmfe(
-        out_paths["motion_correct_path"],
-        out_paths["cnmfe_path"],
+        out_paths[f"motion_correct_path"],
+        out_paths[f"cnmfe_path"],
         num_threads,
         gSiz,
         min_corr,
