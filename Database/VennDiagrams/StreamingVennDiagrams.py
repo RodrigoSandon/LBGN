@@ -39,24 +39,48 @@ class StreamVennDiagrams:
 
         return col_name_substr
 
-    def create_venndiagram_dict(self) -> dict:
-        d = {}
+    def create_venndiagram_dict(self):
+        d_activity = {}
         """
-        d = {
+        d_activity = {
             subevent : {
-                cell_name : ID,
+                +_cells : [cell_name, ...],
                          .
                          .
                          .
             },
             subevent : {
-                cell_name : ID,
+                -_cells : [cell_name, ...],
+                         .
+                         .
+                         .
+            },
+            subevent : {
+                N_cells : [cell_name, ...],
                          .
                          .
                          .
             },
         }
         """
+        d_responsiveness = {}
+        """
+        d_responsiveness = {
+            subevent : {
+                resp_cells : [cell_name, ...],
+                         .
+                         .
+                         .
+            },
+            subevent : {
+                N_cells : [cell_name, ...],
+                         .
+                         .
+                         .
+            },
+        }
+        """
+
         for param in self.subevent_chain:  # param = a subevent
             # make the colname that your going to look for for this
             subevent_substr = self.make_substr_of_col_name(param)
@@ -68,7 +92,16 @@ class StreamVennDiagrams:
             # have subevent name
             # pull the cell_name col values
             # now have full col name, now i can id values for this subevent
-            d[full_subevent_name] = {"+_cells": [], "-_cells": [], "N_cells": []}
+            d_activity[full_subevent_name] = {
+                "+_cells": [],
+                "-_cells": [],
+                "N_cells": [],
+            }
+
+            d_responsiveness[full_subevent_name] = {
+                "resp_cells": [],
+                "N_cells": [],
+            }
 
             for row_idx in range(len(self.df)):
                 # pull the cell_name
@@ -77,23 +110,24 @@ class StreamVennDiagrams:
                 id = self.df.iloc[row_idx][full_subevent_name]
                 # insert to according list
                 if id == "Neutral":
-                    d[full_subevent_name]["N_cells"].append(cell_name)
+                    d_activity[full_subevent_name]["N_cells"].append(cell_name)
+                    d_responsiveness[full_subevent_name]["N_cells"].append(cell_name)
                 elif id == "+":
-                    d[full_subevent_name]["+_cells"].append(cell_name)
+                    d_activity[full_subevent_name]["+_cells"].append(cell_name)
+                    d_responsiveness[full_subevent_name]["resp_cells"].append(cell_name)
                 else:
-                    d[full_subevent_name]["-_cells"].append(cell_name)
+                    d_activity[full_subevent_name]["-_cells"].append(cell_name)
+                    d_responsiveness[full_subevent_name]["resp_cells"].append(cell_name)
 
-        return d
+        return d_activity, d_responsiveness
 
     def venn_diagram(self):
         pass
 
     def stream(self):
-        subevent_cell_ids_d = self.create_venndiagram_dict()
+        cell_ids_activity, cell_ids_responsiveness = self.create_venndiagram_dict()
 
-        # now that cells are categorized
-        for i in subevent_cell_ids_d.items():
-            print(i)
+        # now that cells are categorized, start chaining
 
 
 def main():
