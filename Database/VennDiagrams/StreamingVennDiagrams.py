@@ -2,6 +2,10 @@ import sqlite3
 import pandas as pd
 import os
 
+import matplotlib.pyplot as plt
+from matplotlib_venn import venn2
+
+
 """
 Assumptions:
 
@@ -127,6 +131,10 @@ class StreamVennDiagrams:
     def stream(self):
         cell_ids_activity, cell_ids_responsiveness = self.create_venndiagram_dict()
 
+        for subevent in cell_ids_responsiveness:
+            # for each subevent (first one being or base case)
+            pass
+
         # now that cells are categorized, start chaining
 
 
@@ -166,4 +174,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    pass

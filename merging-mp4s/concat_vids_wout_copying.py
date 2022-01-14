@@ -46,7 +46,7 @@ def main():
 
                 # open new text file
                 os.chdir(root)  # in dst
-                # del old mylist2.txt
+                # del old mylist.txt's if any exist
                 delete_recursively(root, "mylist.txt")
                 delete_recursively(root, "mylist2.txt")
 
