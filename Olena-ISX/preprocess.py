@@ -110,7 +110,7 @@ def preprocess(in_path: Path, out_dir: Optional[Path] = None):
     # left a big cell out and one cell which pnr was low, so we lowered pnr
     #  update 10/18/21 - need to be more lineant as to what is considered a cell
     num_threads = 5  # staying the same
-    gSiz = 48  # cell diameter needs o account for bigger cells, was 16 10/19/21, now 48
+    gSiz = 8  # cell diameter needs o account for bigger cells, was 16 10/19/21, now 48, then 8
     min_corr = 0.7
     min_pnr = 8  # before was 8 10/18/21, 5 on 10/19/21, changed it back to 8 11/22/21
     bg_spatial_subsampling = 1
