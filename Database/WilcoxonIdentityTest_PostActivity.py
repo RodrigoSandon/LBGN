@@ -1,6 +1,5 @@
 import pandas as pd
 from scipy import stats
-from NeuronSessionTestManager import NeuronSessionTestManager
 import sqlite3
 import glob, os
 
@@ -8,65 +7,67 @@ from scipy.ndimage import gaussian_filter1d
 from matplotlib import pyplot as plt
 
 
-class Utilities:
-    def find_paths_conditional_endswith(
-        root_path, og_lookfor: str, cond_lookfor: str
-    ) -> list:
+def find_paths_conditional_endswith(
+    root_path, og_lookfor: str, cond_lookfor: str
+) -> list:
 
-        all_files = []
+    all_files = []
 
-        for root, dirs, files in os.walk(root_path):
+    for root, dirs, files in os.walk(root_path):
 
-            if cond_lookfor in files:
-                # acquire the trunc file
-                file_path = os.path.join(root, cond_lookfor)
-                # print(file_path)
-                all_files.append(file_path)
-            elif cond_lookfor not in files:
-                # acquire the og lookfor
-                file_path = os.path.join(root, og_lookfor)
-                all_files.append(file_path)
+        if cond_lookfor in files:
+            # acquire the trunc file
+            file_path = os.path.join(root, cond_lookfor)
+            # print(file_path)
+            all_files.append(file_path)
+        elif cond_lookfor not in files:
+            # acquire the og lookfor
+            file_path = os.path.join(root, og_lookfor)
+            all_files.append(file_path)
 
-        return all_files
+    return all_files
 
-    def find_paths_startswith(root_path, startswith) -> list:
 
-        files = glob.glob(
-            os.path.join(root_path, "**", "%s*") % (startswith),
-            recursive=True,
-        )
+def find_paths_startswith(root_path, startswith) -> list:
 
-        return files
+    files = glob.glob(
+        os.path.join(root_path, "**", "%s*") % (startswith), recursive=True,
+    )
 
-    def change_cell_names(df: pd.DataFrame):
+    return files
 
-        for col in df.columns:
 
-            df = df.rename(columns={col: col.replace("BLA-Insc-", "")})
-            # print(col)
+def change_cell_names(df: pd.DataFrame):
 
-        return df
+    for col in df.columns:
 
-    def convert_secs_to_idx(
-        unknown_time_min, unknown_time_max, reference_pair: dict, hertz: int
-    ):
-        reference_time = list(reference_pair.keys())[0]  # has to come from 0
-        reference_idx = list(reference_pair.values())[0]
+        df = df.rename(columns={col: col.replace("BLA-Insc-", "")})
+        # print(col)
 
-        idx_start = (unknown_time_min * hertz) + reference_idx
+    return df
 
-        idx_end = (unknown_time_max * hertz) + reference_idx  # exclusive
-        return int(idx_start), int(idx_end)
 
-    def create_subwindow_of_list(
-        lst, unknown_time_min, unknown_time_max, reference_pair, hertz
-    ) -> list:
-        idx_start, idx_end = Utilities.convert_secs_to_idx(
-            unknown_time_min, unknown_time_max, reference_pair, hertz
-        )
+def convert_secs_to_idx(
+    unknown_time_min, unknown_time_max, reference_pair: dict, hertz: int
+):
+    reference_time = list(reference_pair.keys())[0]  # has to come from 0
+    reference_idx = list(reference_pair.values())[0]
 
-        subwindow_lst = lst[idx_start:idx_end]
-        return subwindow_lst
+    idx_start = (unknown_time_min * hertz) + reference_idx
+
+    idx_end = (unknown_time_max * hertz) + reference_idx  # exclusive
+    return int(idx_start), int(idx_end)
+
+
+def create_subwindow_of_list(
+    lst, unknown_time_min, unknown_time_max, reference_pair, hertz
+) -> list:
+    idx_start, idx_end = convert_secs_to_idx(
+        unknown_time_min, unknown_time_max, reference_pair, hertz
+    )
+
+    subwindow_lst = lst[idx_start:idx_end]
+    return subwindow_lst
 
 
 class WilcoxonIdentityTest:
@@ -142,7 +143,7 @@ class WilcoxonIdentityTest:
 
     def wilcoxon_rank_sum(self, number_cells, cell):
 
-        sub_df_baseline_lst = Utilities.create_subwindow_of_list(
+        sub_df_baseline_lst = create_subwindow_of_list(
             list(self.df[cell]),
             unknown_time_min=self.base_lower_bound_time,
             unknown_time_max=self.base_upper_bound_time,
@@ -150,7 +151,7 @@ class WilcoxonIdentityTest:
             hertz=self.hertz,
         )
 
-        sub_df_lst = Utilities.create_subwindow_of_list(
+        sub_df_lst = create_subwindow_of_list(
             list(self.df[cell]),
             unknown_time_min=self.lower_bound_time,
             unknown_time_max=self.upper_bound_time,
@@ -241,7 +242,7 @@ def main():
         print(session)
         SESSION_PATH = os.path.join(ROOT, session)
 
-        csvs = Utilities.find_paths_startswith(SESSION_PATH, "all_concat_cells.csv")
+        csvs = find_paths_startswith(SESSION_PATH, "all_concat_cells.csv")
 
         # Create SQl table here
         table_name = session.replace(" ", "_")
@@ -276,7 +277,7 @@ def main():
                     conn,
                     c,
                     db_name,
-                    Utilities.change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
+                    change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
                     CONCAT_CELLS_PATH,
                     session=table_name,
                     event_type="_".join(list_of_eventtype_name),
@@ -294,7 +295,7 @@ def main():
                     conn,
                     c,
                     db_name,
-                    Utilities.change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
+                    change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
                     CONCAT_CELLS_PATH,
                     session=table_name,
                     event_type="_".join(list_of_eventtype_name),

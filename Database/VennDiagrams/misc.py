@@ -1,2 +1,4 @@
-x = [(1, 2, 3), (4, 5, 6)]
-print(len(x))
+x: dict = {"yes": [], "no": []}
+for count, key in enumerate(x):
+    print(count)
+    print(key)

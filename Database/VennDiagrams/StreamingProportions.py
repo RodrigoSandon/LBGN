@@ -1,9 +1,16 @@
 import sqlite3
+import matplotlib
 import pandas as pd
+import copy
 import os
 
 import matplotlib.pyplot as plt
-from matplotlib_venn import venn2
+from matplotlib_venn import venn2, venn2_circles, venn2_unweighted
+from matplotlib_venn import venn3, venn3_circles
+from matplotlib_venn import venn3_circles
+
+from pprint import pprint as pp
+import circlify as circ
 
 
 """
@@ -13,7 +20,7 @@ Assumptions:
 """
 
 
-class StreamVennDiagrams:
+class StreamProportions:
     def __init__(
         self,
         df: pd.DataFrame,
@@ -32,7 +39,8 @@ class StreamVennDiagrams:
         self.start_choice_collect = start_choice_collect
         self.subevent_chain = subevent_chain
 
-        self.d_to_venns = self.stream()
+        self.stream_responsiveness()
+        self.stream_activity()
 
     def make_substr_of_col_name(self, param: str):
 
@@ -104,7 +112,7 @@ class StreamVennDiagrams:
 
             d_responsiveness[full_subevent_name] = {
                 "resp_cells": [],
-                "N_cells": [],
+                "nonresp_cells": [],
             }
 
             for row_idx in range(len(self.df)):
@@ -115,7 +123,9 @@ class StreamVennDiagrams:
                 # insert to according list
                 if id == "Neutral":
                     d_activity[full_subevent_name]["N_cells"].append(cell_name)
-                    d_responsiveness[full_subevent_name]["N_cells"].append(cell_name)
+                    d_responsiveness[full_subevent_name]["nonresp_cells"].append(
+                        cell_name
+                    )
                 elif id == "+":
                     d_activity[full_subevent_name]["+_cells"].append(cell_name)
                     d_responsiveness[full_subevent_name]["resp_cells"].append(cell_name)
@@ -125,14 +135,120 @@ class StreamVennDiagrams:
 
         return d_activity, d_responsiveness
 
-    def venn_diagram(self):
+    def stacked_barplot(self):
         pass
 
-    def stream(self):
+    def find_subcategories_within_list(
+        self, mylist: list, resp_list: list, nonresp_list: list
+    ) -> list:
+        new_resp_list = []
+        new_nonresp_list = []
+
+        for i in mylist:
+            if i in resp_list:
+                new_resp_list.append(i)
+            else:
+                new_nonresp_list.append(i)
+            """elif i in nonresp_list:
+                new_nonresp_list.append(i)"""
+
+        print("mylist:", len(mylist))
+        # print("new_resp:", new_resp_list)
+        # print("new_nonresp:", new_nonresp_list)
+
+        return [len(new_resp_list), len(new_nonresp_list)]
+
+    def remaining(
+        self, mylist: list, nonresp_list: list,
+    ) -> list:  # should only include resp, so eliminate all nonresp cells
+        cop_my_list = copy.deepcopy(mylist)
+
+        """for i in cop_resp_list:
+            if i not in mylist:
+                cop_resp_list.remove(i)"""
+
+        for i in cop_my_list:
+            if i in nonresp_list:
+                cop_my_list.remove(i)
+
+        return cop_my_list
+
+    def stream_responsiveness(self):
         cell_ids_activity, cell_ids_responsiveness = self.create_venndiagram_dict()
+
+        # OVERALL PROPORTION CHANGE ALONG SUBEVENTS
+        labels = []
+        resp_count = []
+        nonresp_count = []
+
+        # TRACKING ONLY RESP CELLS ALONG SUBEVENTS
+        # subevent_name : [Resp, non-resp #]
+        # subevent_name_subevent_name : [Resp, non-resp #]
+        # subevent_name_subevent_name_subevent_name : [Resp, non-resp #]
+        curr_resp = None
+        tracking_resp = {}
+
+        # TRACKING ONLY NON-RESP????
+
+        for count, subevent in enumerate(cell_ids_responsiveness):
+            subevent_short = subevent.split("_")[1]
+            if count == 0:
+                labels.append(subevent_short)
+                tracking_resp[subevent_short] = []
+            else:
+                labels.append(labels[count - 1] + "_" + subevent_short)
+
+            # OVERALL PROPORTION
+            resp_count.append(len(cell_ids_responsiveness[subevent]["resp_cells"]))
+            nonresp_count.append(
+                len(cell_ids_responsiveness[subevent]["nonresp_cells"])
+            )
+            # TRACKING RESP
+            if count == 0:
+                curr_resp = cell_ids_responsiveness[subevent]["resp_cells"]
+                tracking_resp[subevent_short].append(
+                    len(cell_ids_responsiveness[subevent]["resp_cells"])
+                )
+                tracking_resp[subevent_short].append(
+                    len(cell_ids_responsiveness[subevent]["nonresp_cells"])
+                )
+
+            else:
+
+                # We have a list of previous resp cells already, which of these are now resp.nonresp?
+                # return new proportion here
+                tracking_resp[
+                    labels[count - 1] + "_" + subevent_short
+                ] = self.find_subcategories_within_list(
+                    curr_resp,
+                    cell_ids_responsiveness[subevent]["resp_cells"],
+                    cell_ids_responsiveness[subevent]["nonresp_cells"],
+                )
+
+                # update curr_resp, bc one has existed already
+                # grabbing curr's subevent resp cells based on previous resp cells
+                curr_resp = self.remaining(
+                    curr_resp, cell_ids_responsiveness[subevent]["nonresp_cells"]
+                )
+
+            # print("CURR RESP:", len(curr_resp))
+            print("Labels:", labels)
+            print("Resp count:", resp_count)
+            print("Non-resp count:", nonresp_count)
+            print("TRACKING RESP")
+            print(tracking_resp)
+
+        # now that cells are categorized, start chaining
+
+    def stream_activity(self):
+        cell_ids_activity, cell_ids_responsiveness = self.create_venndiagram_dict()
+
+        # subevent name : [+,-, neutral proportion]
+        venn_diagrams = {}
 
         for subevent in cell_ids_responsiveness:
             # for each subevent (first one being or base case)
+            # each subevent will create a data structure that's ready for venn diagram
             pass
 
         # now that cells are categorized, start chaining
@@ -161,18 +277,13 @@ def main():
             sql_query = pd.read_sql_query(f"SELECT * FROM {session}", conn)
             session_df = pd.DataFrame(sql_query)
 
-            StreamVennDiagrams(
-                session_df,
-                c,
-                db,
-                session,
-                analysis,
-                "Choice_Time",
-                subevent_chain,
+            StreamProportions(
+                session_df, c, db, session, analysis, "Choice_Time", subevent_chain,
             )
+            break
         conn.close()
+        break
 
 
 if __name__ == "__main__":
-    # main()
-    pass
+    main()
