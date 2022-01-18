@@ -38,9 +38,7 @@ class StreamProportions:
         self.analysis = analysis
         self.start_choice_collect = start_choice_collect
         self.subevent_chain = subevent_chain
-
-        self.stream_responsiveness()
-        self.stream_activity()
+        # self.stream_activity()
 
     def make_substr_of_col_name(self, param: str):
 
@@ -85,7 +83,7 @@ class StreamProportions:
                          .
             },
             subevent : {
-                N_cells : [cell_name, ...],
+                nonresp_cells : [cell_name, ...],
                          .
                          .
                          .
@@ -129,49 +127,85 @@ class StreamProportions:
                 elif id == "+":
                     d_activity[full_subevent_name]["+_cells"].append(cell_name)
                     d_responsiveness[full_subevent_name]["resp_cells"].append(cell_name)
-                else:
+                elif id == "-":
                     d_activity[full_subevent_name]["-_cells"].append(cell_name)
                     d_responsiveness[full_subevent_name]["resp_cells"].append(cell_name)
 
         return d_activity, d_responsiveness
 
-    def stacked_barplot(self):
-        pass
-
     def find_subcategories_within_list(
         self, mylist: list, resp_list: list, nonresp_list: list
-    ) -> list:
+    ):
         new_resp_list = []
         new_nonresp_list = []
 
         for i in mylist:
             if i in resp_list:
                 new_resp_list.append(i)
-            else:
+            elif i in nonresp_list:
                 new_nonresp_list.append(i)
-            """elif i in nonresp_list:
-                new_nonresp_list.append(i)"""
+            # does not make a difference if elif or else
 
-        print("mylist:", len(mylist))
-        # print("new_resp:", new_resp_list)
-        # print("new_nonresp:", new_nonresp_list)
+        # print("mylist:", len(mylist))
+        """Here i return what the new list should look like (essentially updating it for
+        the next time we want to find subcategories in a category)
+        """
+        return new_resp_list, [len(new_resp_list), len(new_nonresp_list)]
 
-        return [len(new_resp_list), len(new_nonresp_list)]
+    def find_subcategories_pos(
+        self, curr: list, pos_list: list, neg_list: list, n_list: list
+    ):
+        new_pos_list = []
+        new_neg_list = []
+        new_n_list = []
 
-    def remaining(
-        self, mylist: list, nonresp_list: list,
-    ) -> list:  # should only include resp, so eliminate all nonresp cells
-        cop_my_list = copy.deepcopy(mylist)
+        for i in curr:
+            if i in pos_list:
+                new_pos_list.append(i)
+            elif i in neg_list:
+                new_neg_list.append(i)
+            elif i in n_list:
+                new_n_list.append(i)
 
-        """for i in cop_resp_list:
-            if i not in mylist:
-                cop_resp_list.remove(i)"""
+        # print("mylist:", len(mylist))
+        """Here i return what the new list should look like (essentially updating it for
+        the next time we want to find subcategories in a category)
+        """
+        return new_pos_list, [len(new_pos_list), len(new_neg_list)]
 
-        for i in cop_my_list:
-            if i in nonresp_list:
-                cop_my_list.remove(i)
+    def find_subcategories_neg(
+        self, curr: list, pos_list: list, neg_list: list, n_list: list
+    ):
+        new_pos_list = []
+        new_neg_list = []
+        new_n_list = []
 
-        return cop_my_list
+        for i in curr:
+            if i in pos_list:
+                new_pos_list.append(i)
+            elif i in neg_list:
+                new_neg_list.append(i)
+            elif i in n_list:
+                new_n_list.append(i)
+
+        return new_neg_list, [len(new_pos_list), len(new_neg_list)]
+
+    def find_subcategories_n(
+        self, curr: list, pos_list: list, neg_list: list, n_list: list
+    ):
+        new_pos_list = []
+        new_neg_list = []
+        new_n_list = []
+
+        for i in curr:
+            if i in pos_list:
+                new_pos_list.append(i)
+            elif i in neg_list:
+                new_neg_list.append(i)
+            elif i in n_list:
+                new_n_list.append(i)
+
+        return new_n_list, [len(new_pos_list), len(new_neg_list)]
 
     def stream_responsiveness(self):
         cell_ids_activity, cell_ids_responsiveness = self.create_venndiagram_dict()
@@ -191,12 +225,12 @@ class StreamProportions:
         # TRACKING ONLY NON-RESP????
 
         for count, subevent in enumerate(cell_ids_responsiveness):
-            subevent_short = subevent.split("_")[1]
+            # subevent_short = subevent.split("_")[1]
             if count == 0:
-                labels.append(subevent_short)
-                tracking_resp[subevent_short] = []
+                labels.append(subevent)
+                tracking_resp[subevent] = []
             else:
-                labels.append(labels[count - 1] + "_" + subevent_short)
+                labels.append(labels[count - 1] + "_" + subevent)
 
             # OVERALL PROPORTION
             resp_count.append(len(cell_ids_responsiveness[subevent]["resp_cells"]))
@@ -206,10 +240,10 @@ class StreamProportions:
             # TRACKING RESP
             if count == 0:
                 curr_resp = cell_ids_responsiveness[subevent]["resp_cells"]
-                tracking_resp[subevent_short].append(
+                tracking_resp[subevent].append(
                     len(cell_ids_responsiveness[subevent]["resp_cells"])
                 )
-                tracking_resp[subevent_short].append(
+                tracking_resp[subevent].append(
                     len(cell_ids_responsiveness[subevent]["nonresp_cells"])
                 )
 
@@ -217,9 +251,10 @@ class StreamProportions:
 
                 # We have a list of previous resp cells already, which of these are now resp.nonresp?
                 # return new proportion here
-                tracking_resp[
-                    labels[count - 1] + "_" + subevent_short
-                ] = self.find_subcategories_within_list(
+                (
+                    new_curr,
+                    tracking_resp[labels[count - 1] + "_" + subevent],
+                ) = self.find_subcategories_within_list(
                     curr_resp,
                     cell_ids_responsiveness[subevent]["resp_cells"],
                     cell_ids_responsiveness[subevent]["nonresp_cells"],
@@ -227,36 +262,174 @@ class StreamProportions:
 
                 # update curr_resp, bc one has existed already
                 # grabbing curr's subevent resp cells based on previous resp cells
-                curr_resp = self.remaining(
-                    curr_resp, cell_ids_responsiveness[subevent]["nonresp_cells"]
-                )
+                curr_resp = new_curr
 
-            # print("CURR RESP:", len(curr_resp))
-            print("Labels:", labels)
-            print("Resp count:", resp_count)
-            print("Non-resp count:", nonresp_count)
-            print("TRACKING RESP")
-            print(tracking_resp)
+        # print("CURR RESP:", len(curr_resp))
+        print("Labels:", labels)
+        print("Resp count:", resp_count)
+        print("Non-resp count:", nonresp_count)
+        print("TRACKING RESP")
+        print(tracking_resp)
 
-        # now that cells are categorized, start chaining
+        # now make lists for how the proportions changed along the chain
+        resp_chain = []
+        nonresp_chain = []
+        for key in tracking_resp:
+            resp_chain.append(tracking_resp[key][0])
+            nonresp_chain.append(tracking_resp[key][1])
+
+        return resp_count, nonresp_count, resp_chain, nonresp_chain
 
     def stream_activity(self):
         cell_ids_activity, cell_ids_responsiveness = self.create_venndiagram_dict()
 
-        # subevent name : [+,-, neutral proportion]
-        venn_diagrams = {}
+        # OVERALL PROPORTION CHANGE ALONG SUBEVENTS
+        labels = []
+        pos_count = []
+        neg_count = []
+        n_count = []
 
-        for subevent in cell_ids_responsiveness:
-            # for each subevent (first one being or base case)
-            # each subevent will create a data structure that's ready for venn diagram
-            pass
+        # TRACKING POS/NEG CELLS ALONG SUBEVENTS
+        # subevent_name : [+,-, N #]
+        # subevent_name_subevent_name : [+,-, N #]
+        # subevent_name_subevent_name_subevent_name : [+,-, N #]
+        curr_pos = None
+        tracking_pos = {}
 
-        # now that cells are categorized, start chaining
+        curr_neg = None
+        tracking_neg = {}
+
+        curr_n = None
+        tracking_n = {}
+
+        for count, subevent in enumerate(cell_ids_activity):
+            # subevent_short = subevent.split("_")[1]
+            if count == 0:
+                labels.append(subevent)
+                tracking_pos[subevent] = []
+                tracking_neg[subevent] = []
+                tracking_n[subevent] = []
+            else:
+                labels.append(labels[count - 1] + "_" + subevent)
+
+            # OVERALL PROPORTION
+            pos_count.append(len(cell_ids_activity[subevent]["+_cells"]))
+            neg_count.append(len(cell_ids_activity[subevent]["-_cells"]))
+            n_count.append(len(cell_ids_activity[subevent]["N_cells"]))
+
+            # TRACKING POS/NEG
+            if count == 0:
+                curr_pos = cell_ids_activity[subevent]["+_cells"]
+                curr_neg = cell_ids_activity[subevent]["-_cells"]
+                curr_n = cell_ids_activity[subevent]["N_cells"]
+
+                tracking_pos[subevent].append(
+                    len(cell_ids_activity[subevent]["+_cells"])
+                )
+                tracking_pos[subevent].append(
+                    len(cell_ids_activity[subevent]["-_cells"])
+                )
+                tracking_pos[subevent].append(
+                    len(cell_ids_activity[subevent]["N_cells"])
+                )
+                ###
+
+                tracking_neg[subevent].append(
+                    len(cell_ids_activity[subevent]["+_cells"])
+                )
+                tracking_neg[subevent].append(
+                    len(cell_ids_activity[subevent]["-_cells"])
+                )
+                tracking_neg[subevent].append(
+                    len(cell_ids_activity[subevent]["N_cells"])
+                )
+                ###
+
+                tracking_n[subevent].append(len(cell_ids_activity[subevent]["+_cells"]))
+                tracking_n[subevent].append(len(cell_ids_activity[subevent]["-_cells"]))
+                tracking_n[subevent].append(len(cell_ids_activity[subevent]["N_cells"]))
+
+            else:
+
+                (
+                    new_curr_pos,
+                    tracking_pos[labels[count - 1] + "_" + subevent],
+                ) = self.find_subcategories_pos(
+                    curr_pos,
+                    cell_ids_activity[subevent]["+_cells"],
+                    cell_ids_activity[subevent]["-_cells"],
+                    cell_ids_activity[subevent]["N_cells"],
+                )
+
+                curr_pos = new_curr_pos
+
+                (
+                    new_curr_neg,
+                    tracking_neg[labels[count - 1] + "_" + subevent],
+                ) = self.find_subcategories_neg(
+                    curr_neg,
+                    cell_ids_activity[subevent]["+_cells"],
+                    cell_ids_activity[subevent]["-_cells"],
+                    cell_ids_activity[subevent]["N_cells"],
+                )
+
+                curr_neg = new_curr_neg
+
+                (
+                    new_curr_n,
+                    tracking_n[labels[count - 1] + "_" + subevent],
+                ) = self.find_subcategories_n(
+                    curr_n,
+                    cell_ids_activity[subevent]["+_cells"],
+                    cell_ids_activity[subevent]["-_cells"],
+                    cell_ids_activity[subevent]["N_cells"],
+                )
+
+                curr_n = new_curr_n
+
+        # print("CURR RESP:", len(curr_resp))
+        print("Labels:", labels)
+        print("+ count:", pos_count)
+        print("- count:", neg_count)
+        print("N count:", n_count)
+        print("TRACKING +")
+        print(tracking_pos)
+        print("TRACKING -")
+        print(tracking_neg)
+        print("TRACKING NEUTRAL")
+        print(tracking_n)
+
+
+def stacked_barplot(list_1, list_2, dst):
+    labels_input = []
+
+    print("Enter label (presss 'q' to exit):")
+    ans = None
+
+    while ans != "q":
+        ans = str(input())
+        labels_input.append(ans)
+
+    title = str(input("Enter the title for this figure: "))
+    # Now have labels list (based on my input)
+
+    width = 0.35
+    fig, ax = plt.subplots()
+    ax.bar(labels_input, list_1, width, label="Responsive")
+    ax.bar(labels_input, list_2, width, bottom=list_1, label="Non-Responsive")
+
+    ax.set_ylabel("# Cells")
+    ax.set_title(title)
+    ax.legend()
+
+    plt.savefig(dst)
 
 
 def main():
     # select dir where db's exist
     os.chdir("/home/rory/Rodrigo/Database")
+    # select where plots will go
+    dst = r"/media/rory/Padlock_DT/BLA_Analysis/VennDiagrams"
     # Following parameters determines how many results we acquire from the same data
     dbs = ["BLA_Cells_Ranksum_Pre_Activity", "BLA_Cells_Ranksum_Post_Activity"]
     session_types = ["RDT_D1", "RDT_D2"]
@@ -271,15 +444,34 @@ def main():
         print(f"Curr db: {db}")
         conn = sqlite3.connect(f"{db}.db")
         c = conn.cursor()
-
         for session in session_types:
             print(f"Curr session: {session}")
             sql_query = pd.read_sql_query(f"SELECT * FROM {session}", conn)
             session_df = pd.DataFrame(sql_query)
 
-            StreamProportions(
+            new_subdir = f"{db}/{session}/{'/'.join(subevent_chain)}"
+            new_dir = os.path.join(dst, new_subdir)
+            os.makedirs(new_dir, exist_ok=True)
+
+            os.chdir(new_dir)
+
+            obj = StreamProportions(
                 session_df, c, db, session, analysis, "Choice_Time", subevent_chain,
             )
+
+            (
+                resp_count,
+                nonresp_count,
+                resp_chain,
+                nonresp_chain,
+            ) = obj.stream_responsiveness()
+
+            title = input("Name of overall figure: ")
+            stacked_barplot(resp_count, nonresp_count, f"{new_dir}/{title}")
+
+            title2 = input("Name of chain figure: ")
+            stacked_barplot(resp_chain, nonresp_chain, f"{new_dir}/{title2}")
+
             break
         conn.close()
         break
