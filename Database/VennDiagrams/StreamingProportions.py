@@ -465,12 +465,6 @@ def main():
     for param in param_to_compare_subevents["Block"]:
 
         subevent_chain = [
-            "mannwhitneyu_Shock_Ocurred_Choice_Time_s_True",
-            "mannwhitneyu_Reward_Size_Choice_Time_s_Large",
-            f"mannwhitneyu_Block_Choice_Time_s_{param}",
-        ]
-
-        subevent_chain_dir = [
             "Shock_Ocurred_Choice_Time_s_True",
             "Reward_Size_Choice_Time_s_Large",
             f"Block_Choice_Time_s_{param}",
@@ -482,14 +476,8 @@ def main():
             f"Shock_Ocurred_Choice_Time_s_True_Reward_Size_Choice_Time_s_Large_Block_Choice_Time_s_{param}",
         ]
 
-        overall_subevent_labels = [
-            "Shock_Ocurred_Choice_Time_s_True",
-            "Reward_Size_Choice_Time_s_Large",
-            f"Block_Choice_Time_s_{param}",
-        ]
-
-        overall_plot_name = f"overall_{'_'.join(subevent_chain_dir)}.png"
-        chain_plot_name = f"chain_{'_'.join(subevent_chain_dir)}.png"
+        overall_plot_name = f"overall_{'_'.join(subevent_chain)}.png"
+        chain_plot_name = f"chain_{'_'.join(subevent_chain)}.png"
 
         for db in dbs:
             os.chdir("/home/rory/Rodrigo/Database")
@@ -501,7 +489,7 @@ def main():
                 sql_query = pd.read_sql_query(f"SELECT * FROM {session}", conn)
                 session_df = pd.DataFrame(sql_query)
 
-                new_subdir = f"{db}/{session}/{'/'.join(subevent_chain_dir)}"
+                new_subdir = f"{db}/{session}/{'/'.join(subevent_chain)}"
                 new_dir = os.path.join(dst, new_subdir)
                 os.makedirs(new_dir, exist_ok=True)
 
@@ -526,7 +514,7 @@ def main():
                 stacked_barplot_overall(
                     resp_count,
                     nonresp_count,
-                    overall_subevent_labels,
+                    subevent_chain,
                     f"{new_dir}/{overall_plot_name}",
                 )
 
