@@ -93,7 +93,7 @@ class StreamProportions:
 
         for param in self.subevent_chain:  # param = a subevent
             # make the colname that your going to look for for this
-            subevent_substr = self.make_substr_of_col_name(param)
+            subevent_substr = param
             # now search it in the df, get the full name of col
             full_subevent_name = None
             for col in list(self.df.columns):
@@ -400,8 +400,8 @@ class StreamProportions:
         print(tracking_n)
 
 
-def stacked_barplot(list_1, list_2, dst):
-    labels_input = []
+def stacked_barplot_chain(list_1, list_2, labels, dst):
+    """labels_input = []
 
     print("Enter label (presss 'q' to exit):")
     ans = None
@@ -411,17 +411,33 @@ def stacked_barplot(list_1, list_2, dst):
         if ans != "q":
             labels_input.append(ans)
         else:
-            continue
+            continue"""
 
     # Now have labels list (based on my input)
 
     width = 0.35
     fig, ax = plt.subplots()
-    ax.bar(labels_input, list_1, width, label="Responsive")
-    ax.bar(labels_input, list_2, width, bottom=list_1, label="Non-Responsive")
+    ax.bar(labels, list_1, width, label="Responsive")
+    ax.bar(labels, list_2, width, bottom=list_1, label="Non-Responsive")
 
     ax.set_ylabel("# Cells")
-    ax.set_title(" ".join(labels_input))
+    ax.set_title(" ".join(labels))
+    ax.legend()
+
+    plt.savefig(dst)
+
+
+def stacked_barplot_overall(list_1, list_2, labels, dst):
+
+    # Now have labels list (based on my input)
+
+    width = 0.35
+    fig, ax = plt.subplots()
+    ax.bar(labels, list_1, width, label="Responsive")
+    ax.bar(labels, list_2, width, bottom=list_1, label="Non-Responsive")
+
+    ax.set_ylabel("# Cells")
+    ax.set_title(" ".join(labels))
     ax.legend()
 
     plt.savefig(dst)
@@ -440,46 +456,88 @@ def main():
     # this is where you customize when chain of events to partake in
     # selecting specific columns to start off with, then each subsequent one wil be pulling
     # Block_Reward_Size_Shock_Ocurred_Choice_Time
-    subevent_chain = ["Shock Ocurred", "Reward Size", "Block"]
 
-    for db in dbs:
-        print(f"Curr db: {db}")
-        conn = sqlite3.connect(f"{db}.db")
-        c = conn.cursor()
-        for session in session_types:
-            print(f"Curr session: {session}")
-            sql_query = pd.read_sql_query(f"SELECT * FROM {session}", conn)
-            session_df = pd.DataFrame(sql_query)
+    ###### Individually give name of columns you want for this analysis ######
+    # example column: mannwhitneyu_Shock_Ocurred_Choice_Time_s_True_106_minus10_to_minus5_minus3_to_0
 
-            new_subdir = f"{db}/{session}/{'/'.join(subevent_chain)}"
-            new_dir = os.path.join(dst, new_subdir)
-            os.makedirs(new_dir, exist_ok=True)
+    param_to_compare_subevents = {"Block": ["1dot0", "2dot0", "3dot0"]}
 
-            os.chdir(new_dir)
+    for param in param_to_compare_subevents["Block"]:
 
-            obj = StreamProportions(
-                session_df, c, db, session, analysis, "Choice_Time", subevent_chain,
-            )
+        subevent_chain = [
+            "mannwhitneyu_Shock_Ocurred_Choice_Time_s_True",
+            "mannwhitneyu_Reward_Size_Choice_Time_s_Large",
+            f"mannwhitneyu_Block_Choice_Time_s_{param}",
+        ]
 
-            (
-                resp_count,
-                nonresp_count,
-                resp_chain,
-                nonresp_chain,
-            ) = obj.stream_responsiveness()
+        subevent_chain_dir = [
+            "Shock_Ocurred_Choice_Time_s_True",
+            "Reward_Size_Choice_Time_s_Large",
+            f"Block_Choice_Time_s_{param}",
+        ]
 
-            print(resp_count)
-            print(nonresp_count)
-            print(resp_chain)
-            print(nonresp_chain)
+        chain_subevent_labels = [
+            "Shock_Ocurred_Choice_Time_s_True",
+            "Shock_Ocurred_Choice_Time_s_True_Reward_Size_Choice_Time_s_Large",
+            f"Shock_Ocurred_Choice_Time_s_True_Reward_Size_Choice_Time_s_Large_Block_Choice_Time_s_{param}",
+        ]
 
-            stacked_barplot(resp_count, nonresp_count, f"{new_dir}/overall.png")
+        overall_subevent_labels = [
+            "Shock_Ocurred_Choice_Time_s_True",
+            "Reward_Size_Choice_Time_s_Large",
+            f"Block_Choice_Time_s_{param}",
+        ]
 
-            stacked_barplot(resp_chain, nonresp_chain, f"{new_dir}/chain.png")
+        overall_plot_name = f"overall_{'_'.join(subevent_chain_dir)}.png"
+        chain_plot_name = f"chain_{'_'.join(subevent_chain_dir)}.png"
 
-            # break
-        conn.close()
-        # break
+        for db in dbs:
+            os.chdir("/home/rory/Rodrigo/Database")
+            print(f"Curr db: {db}")
+            conn = sqlite3.connect(f"{db}.db")
+            c = conn.cursor()
+            for session in session_types:
+                print(f"Curr session: {session}")
+                sql_query = pd.read_sql_query(f"SELECT * FROM {session}", conn)
+                session_df = pd.DataFrame(sql_query)
+
+                new_subdir = f"{db}/{session}/{'/'.join(subevent_chain_dir)}"
+                new_dir = os.path.join(dst, new_subdir)
+                os.makedirs(new_dir, exist_ok=True)
+
+                os.chdir(new_dir)
+
+                obj = StreamProportions(
+                    session_df, c, db, session, analysis, "Choice_Time", subevent_chain,
+                )
+
+                (
+                    resp_count,
+                    nonresp_count,
+                    resp_chain,
+                    nonresp_chain,
+                ) = obj.stream_responsiveness()
+
+                print(resp_count)
+                print(nonresp_count)
+                print(resp_chain)
+                print(nonresp_chain)
+
+                stacked_barplot_overall(
+                    resp_count,
+                    nonresp_count,
+                    overall_subevent_labels,
+                    f"{new_dir}/{overall_plot_name}",
+                )
+
+                stacked_barplot_chain(
+                    resp_chain,
+                    nonresp_chain,
+                    chain_subevent_labels,
+                    f"{new_dir}/{chain_plot_name}",
+                )
+
+            conn.close()
 
 
 if __name__ == "__main__":

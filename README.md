@@ -2,11 +2,15 @@
 Supervisors: Dr. Patrick Piantadosi and Dr. Andrew Holmes
 
 # TODO Streams
-1) Include activity tracking in addition to responsiveness tracking
-2) BORIS Matlab to BORIS python for approach abort data
-3) Similarity map (DTW/Pearson corr) --> Decoders --> Interpretation Models
-4) Including DLC --> how is movement alone impacting our analyses?
-5) Include Progressive Ratio Sessions into database
+1) Mix postactivity and preactivity subevents in stacked bar plot
+2) Include activity tracking in addition to responsiveness tracking
+3) BORIS Matlab to BORIS python for approach abort data
+4) Similarity map (DTW/Pearson corr) --> Decoders --> Interpretation Models
+5) Including DLC --> how is movement alone impacting our analyses?
+6) Include Progressive Ratio Sessions into database
+
+# SUGGESTIONS
+1) Do significance analysis on the difference for the stacked plot.
 
 # BUGS
 
