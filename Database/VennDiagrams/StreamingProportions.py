@@ -408,9 +408,11 @@ def stacked_barplot(list_1, list_2, dst):
 
     while ans != "q":
         ans = str(input())
-        labels_input.append(ans)
+        if ans != "q":
+            labels_input.append(ans)
+        else:
+            continue
 
-    title = str(input("Enter the title for this figure: "))
     # Now have labels list (based on my input)
 
     width = 0.35
@@ -419,7 +421,7 @@ def stacked_barplot(list_1, list_2, dst):
     ax.bar(labels_input, list_2, width, bottom=list_1, label="Non-Responsive")
 
     ax.set_ylabel("# Cells")
-    ax.set_title(title)
+    ax.set_title(" ".join(labels_input))
     ax.legend()
 
     plt.savefig(dst)
@@ -466,15 +468,18 @@ def main():
                 nonresp_chain,
             ) = obj.stream_responsiveness()
 
-            title = input("Name of overall figure: ")
-            stacked_barplot(resp_count, nonresp_count, f"{new_dir}/{title}")
+            print(resp_count)
+            print(nonresp_count)
+            print(resp_chain)
+            print(nonresp_chain)
 
-            title2 = input("Name of chain figure: ")
-            stacked_barplot(resp_chain, nonresp_chain, f"{new_dir}/{title2}")
+            stacked_barplot(resp_count, nonresp_count, f"{new_dir}/overall.png")
 
-            break
+            stacked_barplot(resp_chain, nonresp_chain, f"{new_dir}/chain.png")
+
+            # break
         conn.close()
-        break
+        # break
 
 
 if __name__ == "__main__":
