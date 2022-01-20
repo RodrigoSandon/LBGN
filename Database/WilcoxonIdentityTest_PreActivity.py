@@ -273,23 +273,25 @@ def main():
                     CONCAT_CELLS_PATH.split("/")[8],
                 ]
 
-                # Run a test on a subevent
-                WilcoxonIdentityTest(
-                    conn,
-                    c,
-                    db_name,
-                    change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
-                    CONCAT_CELLS_PATH,
-                    session=table_name,
-                    event_type="_".join(list_of_eventtype_name),
-                    base_lower_bound_time=-10,
-                    base_upper_bound_time=-5,
-                    lower_bound_time=-3,
-                    upper_bound_time=0,
-                    reference_pair={0: 100},
-                    hertz=10,
-                    alpha=0.01,
-                )
+                if "Shock Test" not in csv:
+
+                    # Run a test on a subevent
+                    WilcoxonIdentityTest(
+                        conn,
+                        c,
+                        db_name,
+                        change_cell_names(pd.read_csv(CONCAT_CELLS_PATH)),
+                        CONCAT_CELLS_PATH,
+                        session=table_name,
+                        event_type="_".join(list_of_eventtype_name),
+                        base_lower_bound_time=-10,
+                        base_upper_bound_time=-5,
+                        lower_bound_time=-3,
+                        upper_bound_time=0,
+                        reference_pair={0: 100},
+                        hertz=10,
+                        alpha=0.01,
+                    )
 
     conn.close()
 
