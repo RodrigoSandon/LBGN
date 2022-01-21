@@ -12,9 +12,14 @@ def stacked_barplot(list_1, list_2, list_3, title, labels, dst):
 
     width = 0.35
     fig, ax = plt.subplots()
-    ax.bar(labels, list_1, width, bottom=list_2, label="Large Responsive")
-    ax.bar(labels, list_2, width, bottom=list_3, label="Both")
-    ax.bar(labels, list_3, width, label="Small Responsive")
+
+    zipped = zip(list_1, list_2)
+
+    sum = [x + y for (x, y) in zipped]
+
+    ax.bar(labels, list_1, width, label="Large Responsive")
+    ax.bar(labels, list_2, width, bottom=list_1, label="Both")
+    ax.bar(labels, list_3, width, bottom=sum, label="Small Responsive")
 
     ax.set_ylabel("# Cells")
     ax.set_title(title)
@@ -25,7 +30,7 @@ def stacked_barplot(list_1, list_2, list_3, title, labels, dst):
 
 def main():
     # all bars will have the same num cells (within the pool of cells that were resp to X)
-    csv_path = r"/home/rory/Rodrigo/Database/StackedBars/how_shock_respcells_changein_blocks_and_rewsize/take2_rdt2.csv"
+    csv_path = r"/home/rory/Rodrigo/Database/StackedBars/how_shock_respcells_changein_blocks_and_rewsize/take2_rdt2_shockNonresponsive.csv"
     session = "RDT_D2"
     dst = csv_path.replace(".csv", ".png")
 
@@ -42,10 +47,10 @@ def main():
     # d = {"resp_L": 0, "resp_S": 0, "resp_both": 0}
 
     for idx_col, col in enumerate(list(df.columns)):
-        resp_L = 0
-        resp_S = 0
-        resp_both = 0
         if "Large" in col:
+            resp_L = 0
+            resp_S = 0
+            resp_both = 0
             print(col)
             # idx can be cell, all the same cell across columns
             # only perform this if modulus of 2 is 0 (meaning perform this after
