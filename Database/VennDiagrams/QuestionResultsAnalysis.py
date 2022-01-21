@@ -1,16 +1,20 @@
 import os, glob
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib_venn import venn2, venn2_circles, venn2_unweighted
+from matplotlib_venn import venn3, venn3_circles
+from matplotlib_venn import venn3_circles
 
 
-def stacked_barplot(list_1, list_2, title, labels, dst):
+def stacked_barplot(list_1, list_2, list_3, title, labels, dst):
 
     # Now have labels list (based on my input)
 
     width = 0.35
     fig, ax = plt.subplots()
-    ax.bar(labels, list_1, width, label="Responsive")
-    ax.bar(labels, list_2, width, bottom=list_1, label="Non-Responsive")
+    ax.bar(labels, list_1, width, bottom=list_2, label="Large Responsive")
+    ax.bar(labels, list_2, width, bottom=list_3, label="Both")
+    ax.bar(labels, list_3, width, label="Small Responsive")
 
     ax.set_ylabel("# Cells")
     ax.set_title(title)
@@ -20,37 +24,58 @@ def stacked_barplot(list_1, list_2, title, labels, dst):
 
 
 def main():
-    csv_path = r"/home/rory/Rodrigo/Database/StackedBars/how_shock_respcells_changein_blocks_and_rewsize/RDT_D2/Shock_True/rdt2_shock_true_rew_block.csv"
-    session = csv_path.split("/")[7]
+    # all bars will have the same num cells (within the pool of cells that were resp to X)
+    csv_path = r"/home/rory/Rodrigo/Database/StackedBars/how_shock_respcells_changein_blocks_and_rewsize/take2_rdt2.csv"
+    session = "RDT_D2"
     dst = csv_path.replace(".csv", ".png")
 
     df = pd.read_csv(csv_path)
 
-    resp_count = []
-    nonresp_count = []
-    labels = ["Shock Responsiveness", "Large Reward, Block 2", "Large Reward, Block 3"]
+    resp_L_counts = []
+    resp_both_counts = []
+    resp_S_counts = []
 
-    total_cell_count = 106
-    shock_resp_cells_count = len(df)
+    labels = ["Block 1", "Block 2", "Block 3"]
 
-    for count, col in enumerate(list(df.columns)):
-        if count == 1:
-            df_sub = df.loc[df[col] != "Neutral"]
-            resp_count.append(len(df_sub))
-            nonresp_count.append(total_cell_count - len(df_sub))
-            prev_resp_count = len(df_sub)
-        elif count > 1:
-            df_sub = df.loc[df[col] != "Neutral"]
-            resp_count.append(len(df_sub))
-            nonresp_count.append(shock_resp_cells_count - len(df_sub))
+    # Basically, have a dict for each block on the count of cells for each
+    # will need to track idx of each cell so to give it an overall identity
+    # d = {"resp_L": 0, "resp_S": 0, "resp_both": 0}
 
-    print(resp_count)
-    print(nonresp_count)
+    for idx_col, col in enumerate(list(df.columns)):
+        resp_L = 0
+        resp_S = 0
+        resp_both = 0
+        if "Large" in col:
+            print(col)
+            # idx can be cell, all the same cell across columns
+            # only perform this if modulus of 2 is 0 (meaning perform this after
+            # every two cols starting after the first two cols)
+            for idx_row, cell_id in enumerate(df[col]):
+                # print(df.loc[idx][col])
+                large_cell_id = cell_id
+                small_cell_id = df.iloc[idx_row, idx_col + 1]
 
-    title = (
-        f"{session}: Effect of Shock Probability on Shock-Large Reward Responsive Cells"
-    )
-    stacked_barplot(resp_count, nonresp_count, title, labels, dst)
+                if (
+                    large_cell_id != "Neutral" and small_cell_id != "Neutral"
+                ):  # cell responsive to both
+                    resp_both += 1
+                elif (
+                    large_cell_id != "Neutral" and small_cell_id == "Neutral"
+                ):  # resp to L
+                    resp_L += 1
+                elif large_cell_id == "Neutral" and small_cell_id != "Neutral":
+                    resp_S += 1
+
+            resp_L_counts.append(resp_L)
+            resp_both_counts.append(resp_both)
+            resp_S_counts.append(resp_S)
+
+    print(resp_L_counts)
+    print(resp_both_counts)
+    print(resp_S_counts)
+
+    title = f"{session}: Effect of Shock Probability on Reward Responsive Cells"
+    stacked_barplot(resp_L_counts, resp_both_counts, resp_S_counts, title, labels, dst)
 
 
 if __name__ == "__main__":
