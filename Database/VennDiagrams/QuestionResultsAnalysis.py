@@ -28,11 +28,31 @@ def stacked_barplot(list_1, list_2, list_3, title, labels, dst):
     plt.savefig(dst)
 
 
+def venn_diagram(list_1, list_2, list_3, title, labels, dst):
+
+    # Now have labels list (based on my input)
+
+    for i in range(0, 3):
+        plt.figure()
+        print(i)
+        venn2(
+            subsets=(list_1[i], list_3[i], list_2[i]),
+            set_labels=("Large", "Small", "Both"),
+        )
+
+        plt.title(title)
+        dst = dst.replace(".csv", f"_block{i+1}.png")
+        plt.show()
+        plt.savefig(dst)
+        plt.close()
+
+
 def main():
     # all bars will have the same num cells (within the pool of cells that were resp to X)
-    csv_path = r"/home/rory/Rodrigo/Database/StackedBars/how_shock_respcells_changein_blocks_and_rewsize/take2_rdt2_shockNonresponsive.csv"
-    session = "RDT_D2"
-    dst = csv_path.replace(".csv", ".png")
+    csv_path = (
+        r"/home/rory/Rodrigo/Database/VennDiagrams/take2_rdt1_shockNonresponsive.csv"
+    )
+    session = "RDT_D1"
 
     df = pd.read_csv(csv_path)
 
@@ -80,7 +100,9 @@ def main():
     print(resp_S_counts)
 
     title = f"{session}: Effect of Shock Probability on Reward Responsive Cells"
-    stacked_barplot(resp_L_counts, resp_both_counts, resp_S_counts, title, labels, dst)
+    venn_diagram(
+        resp_L_counts, resp_both_counts, resp_S_counts, title, labels, csv_path
+    )
 
 
 if __name__ == "__main__":
