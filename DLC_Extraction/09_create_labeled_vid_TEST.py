@@ -28,8 +28,15 @@ video_paths = find_video_paths(RAW_DATA_DIR, dir_of_vids_for_training=VIDS_OF_TR
 
 
 def main():
-    print("Creating labeled video for: ", video_paths[5])
-    create_labeled_video(CONFIG_PATH, video_paths[5], save_frames=True)
+    # print("Creating labeled video for: ", video_paths[5])
+    # create_labeled_video(CONFIG_PATH, video_paths[5], save_frames=True)
+    create_labeled_video(
+        CONFIG_PATH,
+        [
+            "/media/rory/Padlock_DT/Redundant_Backup/BLA-Insc-11/PR D1/Session-20211108-113157/BLA-INSC-11_PR_D12021-11-08T12_56_36.avi"
+        ],
+        save_frames=True,
+    )
 
 
 if __name__ == "__main__":
