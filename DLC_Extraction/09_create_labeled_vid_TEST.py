@@ -33,8 +33,10 @@ def main():
     create_labeled_video(
         CONFIG_PATH,
         [
-            "/media/rory/Padlock_DT/Redundant_Backup/BLA-Insc-11/PR D1/Session-20211108-113157/BLA-INSC-11_PR_D12021-11-08T12_56_36.avi"
+            "/media/rory/Padlock_DT/Redundant_Backup/BLA-Insc-8/RDT D1/Session-20211021-093007_BLA-INSC-8-RDT-D1/BLA-Insc-8_RDT_D12021-10-21T11_18_16.avi"
         ],
+        filtered=True,
+        draw_skeleton=True,
         save_frames=True,
     )
 
